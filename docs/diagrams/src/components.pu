@@ -1,0 +1,31 @@
+@startuml Components
+
+
+component WebBrowser
+WebBrowser -up-() GUI
+
+actor User
+User .left.> GUI
+
+WebBrowser -right-() WebGL
+WebBrowser --() DOM
+WebBrowser --() WebWorkersAPI
+
+component gpu.js <<framework>>
+
+gpu.js .down.> WebGL
+gpu.js -down-() GPUJS_API
+
+component SubStringSearch <<main>>
+
+SubStringSearch .up.> GPUJS_API
+SubStringSearch .up.> WebGL : <<optional>>
+SubStringSearch .up.> DOM : <<react/vue>>
+SubStringSearch .up.> WebWorkersAPI
+
+component benchmark.js <<framework>>
+benchmark.js -left-() BENCH_API
+
+SubStringSearch .> BENCH_API
+
+@enduml
