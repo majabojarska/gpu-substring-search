@@ -1,14 +1,13 @@
 {
-    "plantuml.diagramsRoot": "docs/diagrams/src",
-    "plantuml.exportOutDir": "docs/diagrams/out",
-    "plantuml.exportSubFolder": false,
-    "spellright.language": [
-        "en_US",
-        "pl_PL"
-    ],
-    "spellright.documentTypes": [
-        "markdown",
-        "latex",
-        "plaintext"
-    ]
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.latex.search.rootFiles.exclude": ["**/parts/**/*.tex"],
+  "latex-workshop.latex.outDir": "%DIR%/../out",
+  "[latex]": {
+    "editor.wordWrap": "bounded"
+  },
+  "plantuml.diagramsRoot": "docs/diagrams/src",
+  "plantuml.exportOutDir": "docs/diagrams/out",
+  "plantuml.exportSubFolder": false,
+  "spellright.language": ["en_US", "pl_PL"],
+  "spellright.documentTypes": ["markdown", "latex", "plaintext"]
 }
