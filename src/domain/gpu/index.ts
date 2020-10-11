@@ -7,4 +7,5 @@ const kernel = gpu.createKernel(
   },
   { output: [100] }
 );
+
 console.log(kernel());
