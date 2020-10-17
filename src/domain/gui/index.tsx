@@ -2,6 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./styles/main.scss";
 
-import HelloJakub from "./components/HelloJakub";
+import App from "./App";
 
-ReactDOM.render(<HelloJakub />, document.querySelector("#root"));
+ReactDOM.render(<App />, document.querySelector("#root"));
