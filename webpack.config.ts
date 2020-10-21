@@ -1,5 +1,5 @@
-const path = require("path");
-const webpack = require("webpack");
+import * as path from "path";
+import * as webpack from "webpack";
 
 /*
  * SplitChunksPlugin is enabled by default and replaced
@@ -23,7 +23,7 @@ const webpack = require("webpack");
  *
  */
 
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
 
 /*
  * We've enabled TerserPlugin for you! This minifies your app
@@ -33,21 +33,28 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
  *
  */
 
-const TerserPlugin = require("terser-webpack-plugin");
+import TerserPlugin from "terser-webpack-plugin";
 
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+import HtmlWebpackPlugin from "html-webpack-plugin";
 
-const ESLintPlugin = require("eslint-webpack-plugin");
+import ESLintPlugin from "eslint-webpack-plugin";
 
-module.exports = {
+import ReactRefreshWebpackPlugin from "@pmmmwh/react-refresh-webpack-plugin";
+
+export default {
   mode: process.env.NODE_ENV == "production" ? "production" : "development",
   entry: "./src/index.ts",
 
   plugins: [
-    new webpack.ProgressPlugin(),
+    new webpack.ProgressPlugin({}),
     new MiniCssExtractPlugin({ filename: "main.[chunkhash].css" }),
-    new HtmlWebpackPlugin({ title: "GPU Substring Search" }),
-    new ESLintPlugin(),
+    new HtmlWebpackPlugin({
+      title: "GPU Substring Search",
+      template: path.join(__dirname, "./template/index.html"),
+    }),
+    new ESLintPlugin({ context: "./src", extensions: ["js", "ts", "tsx"] }),
+    new webpack.HotModuleReplacementPlugin(),
+    new ReactRefreshWebpackPlugin(),
   ],
 
   module: {
@@ -65,9 +72,6 @@ module.exports = {
             loader: MiniCssExtractPlugin.loader,
           },
           {
-            loader: "style-loader",
-          },
-          {
             loader: "css-loader",
             options: {
               sourceMap: true,
@@ -81,11 +85,17 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.m?js/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
     ],
   },
 
   resolve: {
-    extensions: [".tsx", ".ts", ".js"],
+    extensions: [".tsx", ".ts", ".js", ".jsx"],
   },
 
   optimization: {
@@ -105,6 +115,9 @@ module.exports = {
       //name: true
     },
   },
-  devServer: {},
+  devServer: { hot: true },
   devtool: "eval-source-map",
+  stats: {
+    errorDetails: true,
+  },
 };
