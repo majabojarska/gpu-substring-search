@@ -33,7 +33,7 @@ class SolverCPU {
     };
     
     try {
-      this.checkInputPayload(message);
+      this.checkInputPayload(message.data);
       dataOut.matches = this.solve(message.data);
     } catch (error) {
       dataOut.error = error;
@@ -42,8 +42,7 @@ class SolverCPU {
     this.ctx.postMessage(dataOut);
   }
 
-  private checkInputPayload(message: MessageEvent<DataInMessagePayload>) {
-    const data = message.data;
+  private checkInputPayload(data: DataInMessagePayload) {
 
     if (data.text.length < 1) {
       throw Error(
