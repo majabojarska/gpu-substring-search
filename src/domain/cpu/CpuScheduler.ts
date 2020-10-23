@@ -1,46 +1,52 @@
-import Worker from "worker-loader!./workers/solver.worker";
+import Worker from "worker-loader!./workers/Solver.worker";
+import CoreScheduler from "./CoreScheduler";
 import {
   DataInMessagePayload,
   DataOutMessagePayload,
-} from "./workers/solver.worker";
-import { DataProvider, DataSet } from "../data";
+  WorkerReadyPayload,
+} from "./workers/Payloads";
 
-export class CpuScheduler {
-  private workers = 1;
-  private workerPool: Worker[] = [];
-  private dataSet = new DataSet(new Uint8Array(), new Uint8Array());
+interface PoolWorker {
+  worker: Worker;
+  ready: Promise<void>;
+}
 
-  setWorkerCount(count: number): CpuScheduler {
-    this.workers = count;
-    this.workerPool.forEach((w) => w.terminate());
+/**
+ *
+ */
+export class CpuScheduler extends CoreScheduler {
+  private workers: PoolWorker[] = [];
+
+  setWorkerCount(count: number): this {
+    this.workers.forEach((w) => w.worker.terminate());
     for (let i = 0; i < count; i++) {
-      this.workerPool.push(new Worker());
+      const worker = new Worker();
+      const ready = new Promise<void>((resolve, reject) => {
+        worker.onmessage = (message: MessageEvent<WorkerReadyPayload>) => {
+          message.data.ready ? resolve() : reject();
+        };
+      });
+      this.workers.push({ worker, ready });
     }
     return this;
   }
 
-  generateDataSet(textLen: number, patternLen: number): CpuScheduler {
-    const provider = new DataProvider(textLen, patternLen);
-    this.dataSet = provider.getRandomDataSet();
-    return this;
-  }
-
-  setDataSet(dataSet: DataSet): CpuScheduler {
-    this.dataSet = dataSet;
+  async ready(): Promise<this> {
+    await Promise.all(this.workers.map((w) => w.ready));
     return this;
   }
 
   async run(): Promise<number[]> {
     const searchLength =
       this.dataSet.text.length - this.dataSet.pattern.length + 1;
-    const perWorkerMin = searchLength / this.workers;
+    const perWorkerMin = searchLength / this.workers.length;
     const results = await Promise.all(
-      this.workerPool.map((w, i) => {
+      this.workers.map((w, i) => {
         const start = Math.floor(i * perWorkerMin);
         const end = Math.floor((i + 1) * perWorkerMin);
         console.log(start, end);
 
-        return this.runSingle(w, start, end);
+        return this.runSingle(w.worker, start, end);
       })
     );
     return results.flat();

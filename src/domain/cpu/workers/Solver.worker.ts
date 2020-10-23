@@ -1,49 +1,34 @@
-/**
- * (start, end) will return in pattern matching at positions 
- * [start, start+1, ..., end-1]. End index is not included.
- *
- * @param start  Text index to start matching from (zero-based).
- * @param end  Text index to end matching at (non-inclusive).
- * @param pattern  Pattern to find (UTF-8).
- * @param text  Text to search through (UTF-8).
- */
-export interface DataInMessagePayload {
-  start: number;
-  end: number;
-  pattern: Uint8Array;
-  text: Uint8Array;
-}
-
-export interface DataOutMessagePayload {
-  matches: Array<number>;
-  error: Error;
-}
+import {
+  DataInMessagePayload,
+  DataOutMessagePayload,
+  WorkerReadyPayload,
+} from "./Payloads";
 
 class SolverCPU {
   private readonly ctx: Worker = (self as unknown) as Worker;
 
   constructor() {
     this.ctx.onmessage = this.handleMessage.bind(this);
+    this.ctx.postMessage({ ready: true } as WorkerReadyPayload);
   }
 
   handleMessage(message: MessageEvent<DataInMessagePayload>) {
     const dataOut: DataOutMessagePayload = {
       matches: null,
-      error: null
+      error: null,
     };
-    
+
     try {
       this.checkInputPayload(message.data);
       dataOut.matches = this.solve(message.data);
     } catch (error) {
       dataOut.error = error;
     }
-    
+
     this.ctx.postMessage(dataOut);
   }
 
   private checkInputPayload(data: DataInMessagePayload) {
-
     if (data.text.length < 1) {
       throw Error(
         `Text must be at least 1 character long (is ${data.text.length}).`
