@@ -37,15 +37,13 @@ export class CpuScheduler extends CoreScheduler {
   }
 
   async run(): Promise<number[]> {
-    const searchLength =
+    const maxEndIndex =
       this.dataSet.text.length - this.dataSet.pattern.length + 1;
-    const perWorkerMin = searchLength / this.workers.length;
+    const perWorkerRange = maxEndIndex / this.workers.length;
     const results = await Promise.all(
       this.workers.map((w, i) => {
-        const start = Math.floor(i * perWorkerMin);
-        const end = Math.floor((i + 1) * perWorkerMin);
-        console.log(start, end);
-
+        const start = Math.floor(i * perWorkerRange);
+        const end = Math.floor((i + 1) * perWorkerRange);
         return this.runSingle(w.worker, start, end);
       })
     );
