@@ -31,3 +31,19 @@ Build for production:
 ```sh
 npm run build:prod
 ```
+
+## CPU Scheduler
+
+Example usage:
+```ts
+(async () => {
+  const scheduler = new CpuScheduler()
+    .setWorkerCount(4)
+    .generateDataSet(100_000_000, 7);
+  await scheduler.ready(); // wait for all workers to load and respond with `ready` message
+
+    const t1 = performance.now();
+    const result = await scheduler.run()
+    console.log(result, performance.now() - t1);
+})();
+```
