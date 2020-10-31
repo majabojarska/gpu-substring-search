@@ -1,10 +1,9 @@
 export interface DataInMessagePayload {
-    pattern: Uint8Array;
-    text: Uint8Array;
-    kernelCount: number;
+  pattern: Uint8Array;
+  text: Uint8Array;
 }
 
 export interface DataOutMessagePayload {
-    matches: Array<number>;
-    error: Error;
+  matches: Array<number>;
+  error: Error;
 }

@@ -1,121 +1,147 @@
-import { GPU, Texture, IKernelRunShortcut, IKernelFunctionThis, KernelFunction, IConstantsThis } from "gpu.js"
-import { WorkerReadyPayload } from "../cpu/workers/Payloads";
-import { DataInMessagePayload, DataOutMessagePayload } from "./Payloads"
-const gpu = new GPU({ mode: "gpu" });
+import { GPU, KernelFunction } from "gpu.js";
+import { DataInMessagePayload, DataOutMessagePayload } from "./Payloads";
 
-interface IConstants extends IConstantsThis {
-    rangeLen: number,
-}
+/**
+ *  ██╗  ██╗ ██████╗  ██████╗██╗  ██╗ █████╗  ██████╗         ██╗ █████╗ ██╗  ██╗ ██████╗ ██████╗ ██╗███╗   ██╗ █████╗ 
+    ██║ ██╔╝██╔═══██╗██╔════╝██║  ██║██╔══██╗██╔════╝         ██║██╔══██╗██║ ██╔╝██╔═══██╗██╔══██╗██║████╗  ██║██╔══██╗
+    █████╔╝ ██║   ██║██║     ███████║███████║██║              ██║███████║█████╔╝ ██║   ██║██████╔╝██║██╔██╗ ██║███████║
+    ██╔═██╗ ██║   ██║██║     ██╔══██║██╔══██║██║         ██   ██║██╔══██║██╔═██╗ ██║   ██║██╔══██╗██║██║╚██╗██║██╔══██║
+    ██║  ██╗╚██████╔╝╚██████╗██║  ██║██║  ██║╚██████╗    ╚█████╔╝██║  ██║██║  ██╗╚██████╔╝██████╔╝██║██║ ╚████║██║  ██║ <3
+    ╚═╝  ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝     ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝
+                        KOCHAĆ JAKOBINA!!!!!!!!!!!!!!!!!!                                                                                           
+ */
 
-interface IThis extends IKernelFunctionThis {
-    constants: IConstants,
-}
+export default class SolverGPU {
+  private gpu: GPU;
 
-class SolverGPU {
-    private readonly ctx: Worker = (self as unknown) as Worker;
+  constructor() {
+    this.gpu = new GPU();
+  }
 
-    constructor() {
-        this.ctx.onmessage = this.handleMessage.bind(this);
+  solve(dataIn: DataInMessagePayload): DataOutMessagePayload {
+    const dataOut: DataOutMessagePayload = {
+      matches: null,
+      error: null,
+    };
+
+    try {
+      this.checkInputPayload(dataIn);
+      dataOut.matches = this._solve(dataIn);
+    } catch (error) {
+      dataOut.error = error;
     }
 
-    handleMessage(message: MessageEvent<DataInMessagePayload>) {
-        const dataOut: DataOutMessagePayload = {
-            matches: null,
-            error: null,
-        };
+    return dataOut;
+  }
 
-        try {
-            this.checkInputPayload(message.data);
-            dataOut.matches = this.solve(message.data);
-        } catch (error) {
-            dataOut.error = error;
-        }
-
-        this.ctx.postMessage(dataOut);
+  private checkInputPayload(data: DataInMessagePayload) {
+    if (data.text.length < 1) {
+      throw Error(
+        `Text must be at least 1 character long (is ${data.text.length}).`
+      );
     }
-
-    private checkInputPayload(data: DataInMessagePayload) {
-        if (data.text.length < 1) {
-            throw Error(
-                `Text must be at least 1 character long (is ${data.text.length}).`
-            );
-        }
-        if (data.pattern.length < 1) {
-            throw Error(
-                `Pattern must be at least 1 character long (is ${data.pattern.length}).`
-            );
-        }
-        if (data.pattern.length > data.text.length) {
-            throw Error(
-                `Pattern can't be longer than text 
+    if (data.pattern.length < 1) {
+      throw Error(
+        `Pattern must be at least 1 character long (is ${data.pattern.length}).`
+      );
+    }
+    if (data.pattern.length > data.text.length) {
+      throw Error(
+        `Pattern can't be longer than text 
             (pattern length: ${data.pattern.length}, 
             text length: ${data.text.length})`
-            );
-        }
-        if (data.kernelCount < 1) {
-            throw Error(`Kernel count ({data.kernelCount}) must be a positive integer`);
-        }
-        if (data.kernelCount > data.text.length - data.pattern.length + 1) {
-            throw Error(
-                `Kernel count ({data.kernelCount}) must not be greater 
-                than available exact matching positions ({data.text.length - data.pattern.length + 1}).`
-            );
-        }
+      );
     }
+  }
 
-    solve(data: DataInMessagePayload): Array<number> {
-        const maxPositionCount = data.text.length - data.pattern.length + 1;
-        const perKernelRange = maxPositionCount / data.kernelCount;
-        const paddingLength = maxPositionCount - Math.floor(perKernelRange) * data.kernelCount;
+  private _solve(data: DataInMessagePayload): Array<number> {
+    const maxValidMatchPosition = data.text.length - data.pattern.length;
 
-        const paddedText = new Uint8Array(data.text.length + paddingLength);
-        paddedText.set(data.text, 0);
+    // Text length rounded up to nearest 128 multiple + text end overlap
+    const paddedTextLen =
+      Math.ceil(data.text.length / 128) * 128 + data.pattern.length - 1;
+    const paddedText = new Uint8Array(paddedTextLen);
+    paddedText.set(data.text, 0);
 
-        const searchKernel = gpu.createKernel(kernelFunction).setOutput([data.kernelCount]);
+    const kernelCount = Math.ceil(data.text.length / 128);
 
-        const output = searchKernel.run(data.text, data.pattern, perKernelRange);
-        const matches : Array<number> = (output as number[][]).flat();
-        
-        return matches;
-    }
-}
+    console.log("\nKernelCount=", kernelCount);
+    console.log("\npaddedTextLen=", paddedTextLen);
 
-const kernelFunction: KernelFunction = function (text: number[], pattern: number[], rangeLen: number) : Array<number> {
-    const matches: Array<number> = [];
-    const startPosition = this.thread.x * rangeLen;
-    const endPosition = startPosition + rangeLen;
+    const searchKernel = this.gpu
+      .createKernel(this.kernelFunction)
+      .setOutput([kernelCount]);
 
-    // Run kernel for [i * perKernelRange, (i+1)*perKernelRange)
-    for (let pos = startPosition; pos < endPosition; pos++) {
-        let notMatching = false;
+    const output = searchKernel(
+      (paddedText as unknown) as number[],
+      (data.pattern as unknown) as number[],
+      data.pattern.length
+    );
 
-        for (let i = 0; pos < pattern.length; i++) {
-            if (text[pos + i] != pattern[i]) {
-                notMatching = true;
-                break;
-            }
+    const matches: number[] = [];
+
+    (output as Float32Array[]).forEach((chunkArray, chunkArrayIdx) => {
+      // chunkArray contains 4, 32-bit numbers
+      chunkArray.forEach((chunk, chunkIdx) => {
+        // Chunk is a 32-bit number
+        for (let bitIdx = 0; bitIdx < 32; bitIdx++) {
+          if (chunk & (1 << bitIdx)) {
+            // Found match
+            matches.push(chunkArrayIdx * 128 + chunkIdx * 32 + bitIdx);
+            // bitPerPos.push(1);
+          } else {
+            // bitPerPos.push(0);
+          }
         }
-        if (notMatching) {
-            continue;
+      });
+    });
+
+    // Filter out matches at pos>maxMatchPosition
+    const filteredMatches: number[] = [];
+    matches.forEach((pos) =>
+      pos <= maxValidMatchPosition ? filteredMatches.push(pos) : null
+    );
+
+    return matches;
+  }
+
+  /**
+   * Each kernel handles 128 positions.
+   * Returns Array<number> of size 4.
+   */
+  private kernelFunction: KernelFunction = function (
+    text: number[],
+    pattern: number[],
+    patternLen: number
+  ): Array<number> {
+    const startPosition: number = this.thread.x * 128;
+
+    // Allocate 32x4 bits, each bit is a match flag.
+    const matches: Array<number> = [0, 0, 0, 0];
+
+    // Iterate over 32-bit chunks
+    for (let chunkIdx = 0; chunkIdx < 4; chunkIdx++) {
+      // Iterate over bits in chunk
+      for (let bitPosInChunk = 0; bitPosInChunk < 32; bitPosInChunk++) {
+        // Match pattern on relativePos
+        let isMatch = true;
+        for (let patternIdx = 0; patternIdx < patternLen; patternIdx++) {
+          if (
+            text[startPosition + chunkIdx * 32 + bitPosInChunk + patternIdx] !=
+            pattern[patternIdx]
+          ) {
+            // Mismatch, skip to next pattern matching position
+            isMatch = false;
+            break;
+          }
         }
-        matches.push(pos);
+        if (isMatch) {
+          // Match found, set flag to 1
+          matches[chunkIdx] = matches[chunkIdx] | (1 << bitPosInChunk);
+        }
+      }
     }
 
     return matches;
-};
-
-
-/*
-// Look ma! I can typescript on my GPU!
-const kernelFunction: KernelFunction = function(anInt: number, anArray: number[], aNestedArray: number[][]) {
-  const x = .25 + anInt + anArray[this.thread.x] + aNestedArray[this.thread.x][this.thread.y];
-  return x;
-};
-
-const kernel: IKernelRunShortcut = gpu.createKernel(kernelFunction)
-  .setOutput([1]);
-
-const result = kernel(1, [.25], [[1.5]]);
-
-console.log(result[0]); // 3
-*/
+  };
+}
