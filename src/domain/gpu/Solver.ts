@@ -1,11 +1,22 @@
-import { GPU, KernelFunction, GPUMode, GPUInternalMode } from "gpu.js";
+import {
+  GPU,
+  KernelFunction,
+  GPUMode,
+  GPUInternalMode,
+  IKernelRunShortcut,
+  KernelOutput,
+} from "gpu.js";
 import { DataInMessagePayload, DataOutMessagePayload } from "./Payloads";
 
 export default class SolverGPU {
   private gpu: GPU;
+  private kernel: IKernelRunShortcut;
 
   constructor(mode: GPUMode | GPUInternalMode = "gpu") {
     this.gpu = new GPU({ mode });
+    this.kernel = this.gpu
+      .createKernel(this.kernelFunction)
+      .setPrecision("unsigned");
   }
 
   solve(dataIn: DataInMessagePayload): DataOutMessagePayload {
@@ -44,9 +55,7 @@ export default class SolverGPU {
     }
   }
 
-  private _solve(data: DataInMessagePayload): Array<number> {
-    const maxValidMatchPosition = data.text.length - data.pattern.length;
-
+  private _solve(data: DataInMessagePayload): number[] {
     // Text length rounded up to nearest 128 multiple + text end overlap
     const paddedTextLen =
       Math.ceil(data.text.length / 128) * 128 + data.pattern.length - 1;
@@ -55,20 +64,18 @@ export default class SolverGPU {
 
     const kernelCount = Math.ceil(data.text.length / 128);
 
-    console.log("\nKernelCount=", kernelCount);
-    console.log("\npaddedTextLen=", paddedTextLen);
-
-    const searchKernel = this.gpu
-      .createKernel(this.kernelFunction)
-      .setOutput([kernelCount])
-      .setPrecision("unsigned");
-
-    const output = searchKernel(
+    const searchKernel = this.kernel.setOutput([kernelCount]);
+    const output: KernelOutput = searchKernel(
       (paddedText as unknown) as number[],
       (data.pattern as unknown) as number[],
       data.pattern.length
     );
 
+    const maxValidMatchPosition = data.text.length - data.pattern.length;
+    return this.extractMatches(output, maxValidMatchPosition);
+  }
+
+  private extractMatches(output: KernelOutput, maxValidMatchPosition: number) {
     const matches: number[] = [];
 
     (output as Float32Array[]).forEach((chunkArray, chunkArrayIdx) => {
@@ -92,23 +99,22 @@ export default class SolverGPU {
     matches.forEach((pos) =>
       pos <= maxValidMatchPosition ? filteredMatches.push(pos) : null
     );
-
     return matches;
   }
 
   /**
    * Each kernel handles 128 positions.
-   * Returns Array<number> of size 4.
+   * Returns number[] of size 4.
    */
   private kernelFunction: KernelFunction = function (
     text: number[],
     pattern: number[],
     patternLen: number
-  ): Array<number> {
+  ): number[] {
     const startPosition: number = this.thread.x * 128;
 
     // Allocate 32x4 bits, each bit is a match flag.
-    const matches: Array<number> = [0, 0, 0, 0];
+    const matches: number[] = [0, 0, 0, 0];
 
     // Iterate over 32-bit chunks
     for (let chunkIdx = 0; chunkIdx < 4; chunkIdx++) {

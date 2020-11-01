@@ -1,5 +1,5 @@
 import Worker from "worker-loader!./workers/Solver.worker";
-import CoreScheduler from "./CoreScheduler";
+import CoreScheduler from "../common/CoreScheduler";
 import {
   DataInMessagePayload,
   DataOutMessagePayload,
