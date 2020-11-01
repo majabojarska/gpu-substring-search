@@ -85,12 +85,6 @@ export default {
           },
         ],
       },
-      // {
-      //   test: /\.m?js/,
-      //   resolve: {
-      //     // fullySpecified: false,
-      //   },
-      // },
     ],
   },
 
