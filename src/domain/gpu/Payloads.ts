@@ -1,9 +1,2 @@
-export interface DataInMessagePayload {
-  pattern: Uint8Array;
-  text: Uint8Array;
-}
-
-export interface DataOutMessagePayload {
-  matches: Array<number>;
-  error: Error;
-}
+export { DataInMessageBasePayload as DataInMessagePayload } from "../common/Payloads";
+export { DataOutMessageBasePayload as DataOutMessagePayload } from "../common/Payloads";

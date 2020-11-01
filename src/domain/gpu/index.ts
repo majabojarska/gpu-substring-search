@@ -1,21 +1,15 @@
-import { DataInMessagePayload, DataOutMessagePayload } from "./Payloads";
-import { DataProvider } from "../data/DataProvider";
-import SolverGPU from "./Solver";
+import { GpuScheduler } from "./GpuScheduler";
 
-/** TEST **/
-const provider = new DataProvider(1_000_000, 7);
-const dataset = provider.getRandomDataSet();
-const dataIn: DataInMessagePayload = {
-  text: dataset.text,
-  pattern: dataset.pattern,
-};
-const solverGPU = new SolverGPU();
-const p1 = performance.now();
-const dataOut: DataOutMessagePayload = solverGPU.solve(dataIn);
-console.log(performance.now() - p1);
+/** TEMP TEST */
+(async () => {
+  const scheduler = new GpuScheduler().generateDataSet(1_000_000, 7);
+  await scheduler.ready();
 
-console.log("====================================");
-console.log("Matches=", dataOut.matches);
-console.error("Error=", dataOut.error);
-console.log("====================================");
-/** TEST **/
+  for (const i of Array.from(Array(100).keys())) {
+    const t1 = performance.now();
+    await scheduler.run().then((d) => {
+      console.log(d, performance.now() - t1);
+    });
+  }
+})();
+/** TEMP TEST */

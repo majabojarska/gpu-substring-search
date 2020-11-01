@@ -16,4 +16,5 @@ export default abstract class CoreScheduler {
   }
 
   public abstract ready(): Promise<this>;
+  public abstract async run(): Promise<number[]>;
 }
