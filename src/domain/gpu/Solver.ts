@@ -1,11 +1,11 @@
-import { GPU, KernelFunction } from "gpu.js";
+import { GPU, KernelFunction, GPUMode, GPUInternalMode } from "gpu.js";
 import { DataInMessagePayload, DataOutMessagePayload } from "./Payloads";
 
 export default class SolverGPU {
   private gpu: GPU;
 
-  constructor() {
-    this.gpu = new GPU();
+  constructor(mode: GPUMode | GPUInternalMode = "gpu") {
+    this.gpu = new GPU({ mode });
   }
 
   solve(dataIn: DataInMessagePayload): DataOutMessagePayload {
@@ -60,7 +60,8 @@ export default class SolverGPU {
 
     const searchKernel = this.gpu
       .createKernel(this.kernelFunction)
-      .setOutput([kernelCount]);
+      .setOutput([kernelCount])
+      .setPrecision("unsigned");
 
     const output = searchKernel(
       (paddedText as unknown) as number[],
