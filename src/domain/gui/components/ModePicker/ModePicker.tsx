@@ -11,8 +11,8 @@ const CountryPicker: React.FC = () => {
         defaultValue=""
         variant="filled"
       >
-        {modes.map((country) => (
-          <option value={country}>{country}</option>
+        {modes.map((mode) => (
+          <option value={mode}>{mode}</option>
         ))}
       </NativeSelect>
     </FormControl>

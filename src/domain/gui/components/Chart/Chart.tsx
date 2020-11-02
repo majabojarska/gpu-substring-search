@@ -1,22 +1,20 @@
 import React, { useState } from "react";
 import { Line } from "react-chartjs-2";
+import { Dataset } from "../../App";
 import "./Chart.scss";
 
-const Chart: React.FC = () => {
-  const [dailyData, setDailyData] = useState([3, 41, 213, 1325, 324, 3452]);
+interface ChartProps {
+  datasets: Dataset[];
+}
 
-  const lineChart = dailyData.length ? (
+const Chart = (props: ChartProps) => {
+  const { datasets } = props;
+
+  const lineChart = datasets.length ? (
     <Line
       data={{
-        labels: ['1', '2', '3', '4', '5', '6'],
-        datasets: [
-          {
-            data: dailyData,
-            label: "Data",
-            borderColor: "#3333ff",
-            fill: true,
-          },
-        ],
+        labels: [1, 2, 3, 4, 5, 6],
+        datasets: datasets,
       }}
       options={{
         scales: {
