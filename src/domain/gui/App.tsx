@@ -20,11 +20,36 @@ export interface GeneralConfigProps {
   datasetLength: number;
 }
 
+// {
+//   data: [
+//     { x: 1, y: 3 },
+//     { x: 3, y: 6 },
+//     { x: 4, y: 8 },
+//     { x: 5, y: 15 },
+//     { x: 6, y: 5 },
+//   ],
+//   label: "Data1",
+//   borderColor: "#3333ff",
+//   fill: true,
+// },
+// {
+//   data: [
+//     { x: 1, y: 5 },
+//     { x: 3, y: 2 },
+//     { x: 4, y: 4 },
+//     { x: 5, y: 10 },
+//     { x: 6, y: 16 },
+//   ],
+//   label: "Data2",
+//   borderColor: "#33ffff",
+//   fill: true,
+// },
+
 export interface Dataset {
-  data: {x: number, y: number}[],
-  label: string,
-  borderColor: string,
-  fill: boolean,
+  data: { x: number; y: number }[];
+  label: string;
+  borderColor: string;
+  fill: boolean;
 }
 
 function a11yProps(index: any) {
@@ -59,20 +84,19 @@ const App: React.FC = () => {
   const [generalConfig, setGeneralConfig] = useState<
     GeneralConfigProps | undefined
   >({ textLength: 0, patternLength: 0, textLengthDelta: 0, datasetLength: 0 });
-  const [singleCoreDatasets, setSingleCoreDatasets] = useState<Dataset[]>([
-    {
-      data: [
-        { x: 1, y: 3 },
-        { x: 3, y: 6 },
-        { x: 4, y: 8 },
-        { x: 5, y: 15 },
-        { x: 6, y: 5 },
-      ],
-      label: "Data1",
-      borderColor: "#3333ff",
-      fill: true,
-    },
-    {
+  const [singleCoreDatasets, setSingleCoreDatasets] = useState([]);
+  const [cpuMulticoreDatasets, setCpuMulticoreDatasets] = useState([]);
+  const [gpuDatasets, setGpuDatasets] = useState([]);
+
+  const handleChange = (event: React.ChangeEvent, newValue: number) => {
+    setValue(newValue);
+  };
+
+  const runSingleCoreHandler = () => {
+    console.log("run single core");
+    //run test
+
+    const newDataset: Dataset = {
       data: [
         { x: 1, y: 5 },
         { x: 3, y: 2 },
@@ -83,13 +107,52 @@ const App: React.FC = () => {
       label: "Data2",
       borderColor: "#33ffff",
       fill: true,
-    },
-  ]);
-  const [cpuMulticoreDatasets, setCpuMulticoreDatasets] = useState([]);
-  const [gpuDatasets, setGpuDatasets] = useState([]);
+    };
 
-  const handleChange = (event: React.ChangeEvent, newValue: number) => {
-    setValue(newValue);
+    const updatedDatasets = singleCoreDatasets.concat(newDataset);
+    setSingleCoreDatasets(updatedDatasets);
+  };
+
+  const runCpuMultiCoreCoreHandler = () => {
+    console.log("run multi core cpu");
+
+    const newDataset: Dataset = {
+      data: [
+        { x: 1, y: 5 },
+        { x: 3, y: 2 },
+        { x: 4, y: 4 },
+        { x: 5, y: 10 },
+        { x: 6, y: 16 },
+      ],
+      label: "Data2",
+      borderColor: "#33ffff",
+      fill: true,
+    };
+
+    const updatedDatasets = cpuMulticoreDatasets.concat(newDataset);
+    setCpuMulticoreDatasets(updatedDatasets);
+    
+  };
+
+  const runGpuMultiCoreCoreHandler = () => {
+    console.log("run multi core gpu");
+
+    const newDataset: Dataset = {
+      data: [
+        { x: 1, y: 5 },
+        { x: 3, y: 2 },
+        { x: 4, y: 4 },
+        { x: 5, y: 10 },
+        { x: 6, y: 16 },
+      ],
+      label: "Data2",
+      borderColor: "#33ffff",
+      fill: true,
+    };
+
+    const updatedDatasets = gpuDatasets.concat(newDataset);
+    setGpuDatasets(updatedDatasets);
+    
   };
 
   const resetDatasets = () => {
@@ -131,7 +194,11 @@ const App: React.FC = () => {
             <Input type="number" />
           </Grid>
           <Grid item xs={6} justify="center" alignItems="center">
-            <Button variant="outlined" color="primary">
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={runSingleCoreHandler}
+            >
               Uruchom
             </Button>
           </Grid>
@@ -155,11 +222,16 @@ const App: React.FC = () => {
             <Input type="number" />
           </Grid>
           <Grid item xs={6} justify="center" alignItems="center">
-            <Button variant="outlined" color="primary">
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={runCpuMultiCoreCoreHandler}
+            >
               Uruchom
             </Button>
           </Grid>
         </Grid>
+        <Chart datasets={cpuMulticoreDatasets} />
       </TabPanel>
       <TabPanel value={value} index={2}>
         <Grid
@@ -178,11 +250,16 @@ const App: React.FC = () => {
             <Input type="number" />
           </Grid>
           <Grid item xs={6}>
-            <Button variant="outlined" color="primary">
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={runGpuMultiCoreCoreHandler}
+            >
               Uruchom
             </Button>
           </Grid>
         </Grid>
+        <Chart datasets={gpuDatasets} />
       </TabPanel>
       <TabPanel value={value} index={3}>
         Item Four
