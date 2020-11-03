@@ -84,6 +84,11 @@ const App: React.FC = () => {
   const [generalConfig, setGeneralConfig] = useState<
     GeneralConfigProps | undefined
   >({ textLength: 0, patternLength: 0, textLengthDelta: 0, datasetLength: 0 });
+  const [reapetsAmountSingleCore, setReapetsAmountSingleCore] = useState(0)
+  const [reapetsAmountMultiCore, setReapetsAmountMultiCore] = useState(0)
+  const [reapetsAmountGPU, setReapetsAmountGPU] = useState(0)
+  const [thredsAmountCPU, setThredsAmountCPU] = useState(0)
+  const [kernelsAmountGPU, setKernelsAmountGPU] = useState(0)
   const [singleCoreDatasets, setSingleCoreDatasets] = useState([]);
   const [cpuMulticoreDatasets, setCpuMulticoreDatasets] = useState([]);
   const [gpuDatasets, setGpuDatasets] = useState([]);
@@ -91,6 +96,26 @@ const App: React.FC = () => {
   const handleChange = (event: React.ChangeEvent, newValue: number) => {
     setValue(newValue);
   };
+
+  const onReapetsAmountSingleCoreChange = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    setReapetsAmountSingleCore(+event.target.value)
+  }
+
+  const onReapetsAmountMultiCoreChange = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    setReapetsAmountMultiCore(+event.target.value)
+  }
+
+  const onsetReapetsAmountGPUChange = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    setReapetsAmountGPU(+event.target.value)
+  }
+
+  const onThredsAmountCPUChange = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    setThredsAmountCPU(+event.target.value)
+  }
+
+  const onKernelsAmountGPUChange = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    setKernelsAmountGPU(+event.target.value)
+  }
 
   const runSingleCoreHandler = () => {
     console.log("run single core");
@@ -191,7 +216,7 @@ const App: React.FC = () => {
         >
           <Grid item xs={6} justify="center" alignItems="center">
             <FormLabel>Liczba powtórzeń dla pojedynczych problemu: </FormLabel>
-            <Input type="number" />
+            <Input type="number" onChange={onReapetsAmountSingleCoreChange} value={reapetsAmountSingleCore}/>
           </Grid>
           <Grid item xs={6} justify="center" alignItems="center">
             <Button
@@ -215,11 +240,11 @@ const App: React.FC = () => {
         >
           <Grid item xs={6} justify="center" alignItems="center">
             <FormLabel>Liczba powtórzeń dla pojedynczych problemu: </FormLabel>
-            <Input type="number" />
+            <Input type="number" onChange={onReapetsAmountMultiCoreChange} value={reapetsAmountMultiCore} />
           </Grid>
           <Grid item xs={6} justify="center" alignItems="center">
             <FormLabel>Liczba wątków: </FormLabel>
-            <Input type="number" />
+            <Input type="number" onChange={onThredsAmountCPUChange} value={thredsAmountCPU} />
           </Grid>
           <Grid item xs={6} justify="center" alignItems="center">
             <Button
@@ -243,11 +268,11 @@ const App: React.FC = () => {
         >
           <Grid item xs={6}>
             <FormLabel>Liczba powtórzeń dla pojedynczych problemu: </FormLabel>
-            <Input type="number" />
+            <Input type="number" onChange={onsetReapetsAmountGPUChange} value={reapetsAmountGPU}/>
           </Grid>
           <Grid item xs={6}>
             <FormLabel>Liczba wątków: </FormLabel>
-            <Input type="number" />
+            <Input type="number" onChange={onKernelsAmountGPUChange} value={kernelsAmountGPU}/>
           </Grid>
           <Grid item xs={6}>
             <Button
