@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Line } from "react-chartjs-2";
 import { Dataset } from "../../App";
 import "./Chart.scss";

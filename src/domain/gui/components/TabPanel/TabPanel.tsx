@@ -1,5 +1,5 @@
 import React from "react";
-import { makeStyles, Theme } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 import Box from "@material-ui/core/Box";
 
 interface TabPanelProps {
@@ -8,7 +8,7 @@ interface TabPanelProps {
   value: any;
 }
 
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles(() => ({
   container: {
     display: "flex",
     flexDirection: "column",
