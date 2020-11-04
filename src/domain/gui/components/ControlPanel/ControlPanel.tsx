@@ -1,38 +1,20 @@
-import React, { useReducer, useState, SyntheticEvent } from "react";
-import { makeStyles } from "@material-ui/core/styles";
+import React, { useEffect, useState } from "react";
 import Grid from "@material-ui/core/Grid";
 import { GeneralConfigProps } from "../../App";
-import { Button, FormLabel, Input } from "@material-ui/core";
+import { Box, Button, TextField } from "@material-ui/core";
+import { textFieldProps } from "../Common/Props";
 
 interface ConfigProps {
   config: GeneralConfigProps;
   setConfig: React.Dispatch<React.SetStateAction<GeneralConfigProps>>;
-  resetFunc: any;
+  resetFunc: () => void;
 }
 
-const useStyles = makeStyles(() => ({
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    margin: 25,
-  },
-  centered: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-}));
-
-const ControlPanel = (props: ConfigProps) => {
-  const classes = useStyles();
+const ControlPanel: React.FC<ConfigProps> = (props: ConfigProps) => {
   const { config, setConfig, resetFunc } = props;
   const [textLength, setTextLength] = useState(config.textLength);
   const [patternLength, setPatternLength] = useState(config.patternLength);
-  const [textLengthDelta, settextLengthDelta] = useState(
+  const [textLengthDelta, setTextLengthDelta] = useState(
     config.textLengthDelta
   );
   const [datasetLength, setDatasetLength] = useState(config.datasetLength);
@@ -52,7 +34,7 @@ const ControlPanel = (props: ConfigProps) => {
   const onTextLengthDeltaChange = (
     event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ) => {
-    settextLengthDelta(+event.target.value);
+    setTextLengthDelta(+event.target.value);
   };
 
   const onDatasetLengthChange = (
@@ -61,14 +43,14 @@ const ControlPanel = (props: ConfigProps) => {
     setDatasetLength(+event.target.value);
   };
 
-  const onConfigSetHandler = () => {
+  useEffect(() => {
     setConfig({
-      textLength: textLength,
-      patternLength: patternLength,
-      textLengthDelta: textLengthDelta,
-      datasetLength: datasetLength,
+      textLength,
+      patternLength,
+      textLengthDelta,
+      datasetLength,
     });
-  };
+  }, [textLength, patternLength, textLengthDelta, datasetLength]);
 
   const onConfigResetHandler = () => {
     setConfig({
@@ -81,58 +63,57 @@ const ControlPanel = (props: ConfigProps) => {
   };
 
   return (
-    <div className={classes.container}>
+    <Box my={3}>
       <Grid container spacing={1}>
         <Grid container item xs={12} spacing={1}>
           <Grid item xs={6}>
-            <FormLabel>Długość tekstu: </FormLabel>
-            <Input
-              type="number"
+            <TextField
               onChange={onTextLengthChange}
               value={textLength}
+              label="Długość tekstu"
+              {...textFieldProps}
             />
           </Grid>
           <Grid item xs={6}>
-            <FormLabel>Długość wzorca: </FormLabel>
-            <Input
-              type="number"
+            <TextField
               onChange={onPatternLengthChange}
               value={patternLength}
+              label="Długość wzorca"
+              {...textFieldProps}
             />
           </Grid>
         </Grid>
         <Grid container item xs={12} spacing={1}>
           <Grid item xs={6}>
-            <FormLabel>Delta długości tekstu: </FormLabel>
-            <Input
-              type="number"
+            <TextField
               onChange={onTextLengthDeltaChange}
               value={textLengthDelta}
+              label="Delta długości tekstu"
+              {...textFieldProps}
             />
           </Grid>
           <Grid item xs={6}>
-            <FormLabel>Długość datasetu: </FormLabel>
-            <Input
-              type="number"
+            <TextField
               onChange={onDatasetLengthChange}
               value={datasetLength}
+              label="Liczba iteracji"
+              {...textFieldProps}
             />
           </Grid>
         </Grid>
         <Grid container item xs={12} spacing={1}>
           <Grid item xs={6} justify="center" alignItems="center">
-            <Button variant="contained" color="primary" onClick={onConfigSetHandler}>
-              Zatwierdź
-            </Button>
-          </Grid>
-          <Grid item xs={6} justify="center" alignItems="center">
-            <Button variant="outlined" color="primary" onClick={onConfigResetHandler}>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={onConfigResetHandler}
+            >
               Reset
             </Button>
           </Grid>
         </Grid>
       </Grid>
-    </div>
+    </Box>
   );
 };
 
