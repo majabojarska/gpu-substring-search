@@ -86,9 +86,6 @@ export default class SolverGPU {
           if (chunk & (1 << bitIdx)) {
             // Found match
             matches.push(chunkArrayIdx * 128 + chunkIdx * 32 + bitIdx);
-            // bitPerPos.push(1);
-          } else {
-            // bitPerPos.push(0);
           }
         }
       });
