@@ -81,6 +81,7 @@ const SingleCoreTab: React.FC<Props> = (props: Props) => {
           dataSeries={dataSeries}
           plottedStat="mean"
           title="Średni czas wykonania"
+          histogram={true}
         />
         <BenchmarkChart
           dataSeries={dataSeries}
