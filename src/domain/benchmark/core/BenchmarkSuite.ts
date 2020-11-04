@@ -2,6 +2,7 @@ import Benchmark, { BenchmarkConfig, BenchmarkResult } from "./Benchmark";
 import * as stats from "stats-lite";
 export default class BenchmarkSuite {
   private readonly benchmarks: Benchmark[] = [];
+
   constructor(private readonly name: string) {}
 
   add(
@@ -15,11 +16,12 @@ export default class BenchmarkSuite {
   }
 
   async run(): Promise<BenchmarkResult[]> {
+    await new Promise((r) => setTimeout(r, 500));
     const results: BenchmarkResult[] = [];
 
     for (const benchmark of this.benchmarks) {
       const times = await benchmark.runMultiple(benchmark.options.repeats);
-      results.push({
+      const result = {
         config: benchmark.options,
         min: Math.min(...times),
         max: Math.max(...times),
@@ -29,7 +31,8 @@ export default class BenchmarkSuite {
         times,
         variance: stats.variance(times),
         sem: stats.stdev(times) / Math.sqrt(times.length),
-      });
+      };
+      results.push(result);
     }
 
     return results;

@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
 import Grid from "@material-ui/core/Grid";
-import { GeneralConfigProps } from "../../App";
-import { Box, Button, TextField } from "@material-ui/core";
+import { defaultGeneralConfig, GeneralConfig } from "../../App";
+import {
+  Box,
+  Button,
+  FormControlLabel,
+  Switch,
+  TextField,
+} from "@material-ui/core";
 import { textFieldProps } from "../Common/Props";
 
 interface ConfigProps {
-  config: GeneralConfigProps;
-  setConfig: React.Dispatch<React.SetStateAction<GeneralConfigProps>>;
+  config: GeneralConfig;
+  setConfig: React.Dispatch<React.SetStateAction<GeneralConfig>>;
   resetFunc: () => void;
 }
 
@@ -17,58 +23,36 @@ const ControlPanel: React.FC<ConfigProps> = (props: ConfigProps) => {
   const [textLengthDelta, setTextLengthDelta] = useState(
     config.textLengthDelta
   );
-  const [datasetLength, setDatasetLength] = useState(config.datasetLength);
-
-  const onTextLengthChange = (
-    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => {
-    setTextLength(+event.target.value);
-  };
-
-  const onPatternLengthChange = (
-    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => {
-    setPatternLength(+event.target.value);
-  };
-
-  const onTextLengthDeltaChange = (
-    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => {
-    setTextLengthDelta(+event.target.value);
-  };
-
-  const onDatasetLengthChange = (
-    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => {
-    setDatasetLength(+event.target.value);
-  };
+  const [dataSetRepeats, setDataSetRepeats] = useState(config.dataSetRepeats);
+  const [exponential, setExponential] = useState(config.exponential);
 
   useEffect(() => {
     setConfig({
       textLength,
       patternLength,
       textLengthDelta,
-      datasetLength,
+      dataSetRepeats,
+      exponential,
     });
-  }, [textLength, patternLength, textLengthDelta, datasetLength]);
+  }, [textLength, patternLength, textLengthDelta, dataSetRepeats, exponential]);
 
   const onConfigResetHandler = () => {
-    setConfig({
-      textLength: 0,
-      patternLength: 0,
-      textLengthDelta: 0,
-      datasetLength: 0,
-    });
+    const d = defaultGeneralConfig;
+    setTextLength(d.textLength);
+    setPatternLength(d.patternLength);
+    setTextLengthDelta(d.textLengthDelta);
+    setDataSetRepeats(d.dataSetRepeats);
+    setExponential(d.exponential);
     resetFunc();
   };
 
   return (
-    <Box my={3}>
+    <Box py={3}>
       <Grid container spacing={1}>
         <Grid container item xs={12} spacing={1}>
           <Grid item xs={6}>
             <TextField
-              onChange={onTextLengthChange}
+              onChange={(e) => setTextLength(+e.target.value)}
               value={textLength}
               label="Długość tekstu"
               {...textFieldProps}
@@ -76,7 +60,7 @@ const ControlPanel: React.FC<ConfigProps> = (props: ConfigProps) => {
           </Grid>
           <Grid item xs={6}>
             <TextField
-              onChange={onPatternLengthChange}
+              onChange={(e) => setPatternLength(+e.target.value)}
               value={patternLength}
               label="Długość wzorca"
               {...textFieldProps}
@@ -86,23 +70,35 @@ const ControlPanel: React.FC<ConfigProps> = (props: ConfigProps) => {
         <Grid container item xs={12} spacing={1}>
           <Grid item xs={6}>
             <TextField
-              onChange={onTextLengthDeltaChange}
+              onChange={(e) => setTextLengthDelta(+e.target.value)}
               value={textLengthDelta}
-              label="Delta długości tekstu"
+              label="Zmiana długości tekstu"
               {...textFieldProps}
             />
           </Grid>
           <Grid item xs={6}>
             <TextField
-              onChange={onDatasetLengthChange}
-              value={datasetLength}
+              onChange={(e) => setTextLength(+e.target.value)}
+              value={dataSetRepeats}
               label="Liczba iteracji"
               {...textFieldProps}
             />
           </Grid>
         </Grid>
         <Grid container item xs={12} spacing={1}>
-          <Grid item xs={6} justify="center" alignItems="center">
+          <Grid item xs={6}>
+            <FormControlLabel
+              control={
+                <Switch
+                  color="primary"
+                  checked={exponential}
+                  onChange={(v) => setExponential(v.target.checked)}
+                />
+              }
+              label="Wykładnicza"
+            />
+          </Grid>
+          <Grid item xs={6}>
             <Button
               variant="outlined"
               color="primary"
