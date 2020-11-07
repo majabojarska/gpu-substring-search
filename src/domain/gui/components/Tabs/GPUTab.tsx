@@ -88,7 +88,9 @@ const GPUTab: React.FC<Props> = (props: Props) => {
           value={kernels}
           {...textFieldProps}
           label="Długość wyniku kernela (x32b)"
-          type="number"
+          InputProps={{
+            inputProps: { min: 1, max: 4, style: { width: "218px" } },
+          }}
         />
       </Grid>
       <Grid item xs={6} container alignItems="center">

@@ -10,9 +10,7 @@ import {
 import React, { useState } from "react";
 import { textFieldProps } from "../Common/Props";
 import { GeneralConfig } from "../../App";
-import BenchmarkChart, {
-  BenchmarkChartDataSeries,
-} from "../Chart/BenchmarkChart";
+import { BenchmarkChartDataSeries } from "../Chart/BenchmarkChart";
 import BenchmarkSuite from "../../../benchmark/core/BenchmarkSuite";
 import { DataProvider } from "../../../data";
 import { HighlightOff } from "@material-ui/icons";

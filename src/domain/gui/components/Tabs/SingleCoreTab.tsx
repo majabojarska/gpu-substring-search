@@ -10,7 +10,7 @@ import {
 import React, { useState } from "react";
 import { textFieldProps } from "../../components/Common/Props";
 import { GeneralConfig } from "../../App";
-import BenchmarkChart, {
+import  {
   BenchmarkChartDataSeries,
 } from "../Chart/BenchmarkChart";
 import BenchmarkSuite from "../../../benchmark/core/BenchmarkSuite";

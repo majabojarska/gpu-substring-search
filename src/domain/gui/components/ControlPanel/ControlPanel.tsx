@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Grid from "@material-ui/core/Grid";
 import { defaultGeneralConfig, GeneralConfig } from "../../App";
-import {
-  Box,
-  Button,
-  FormControlLabel,
-  Switch,
-  TextField,
-} from "@material-ui/core";
+import { Button, FormControlLabel, Switch, TextField } from "@material-ui/core";
 import { textFieldProps } from "../Common/Props";
 
 interface ConfigProps {

@@ -1,6 +1,6 @@
 import { Grid } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
-import BenchmarkChart, {
+import  {
   BenchmarkChartDataSeries,
 } from "../Chart/BenchmarkChart";
 import BenchmarkChartSet from "../Common/BenchmarkChartSet";
