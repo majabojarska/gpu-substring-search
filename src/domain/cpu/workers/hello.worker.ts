@@ -1,12 +1,22 @@
+/**
+ * (start, end) will return in pattern matching at positions 
+ * [start, start+1, ..., end-1]. End index is not included.
+ *
+ * @param start  Text index to start matching from (zero-based).
+ * @param end  Text index to end matching at (non-inclusive).
+ * @param pattern  Pattern to find (UTF-8).
+ * @param text  Text to search through (UTF-8).
+ */
 export interface DataInMessagePayload {
-  offset: number;
-  chunkLength: number;
+  start: number;
+  end: number;
   pattern: Uint8Array;
   text: Uint8Array;
 }
 
 export interface DataOutMessagePayload {
   matches: Array<number>;
+  error: Error;
 }
 
 class SolverCPU {
@@ -17,27 +27,64 @@ class SolverCPU {
   }
 
   handleMessage(message: MessageEvent<DataInMessagePayload>) {
-    if (message.data.pattern.length < 1 || message.data.text.length < 1) {
-      throw Error("Pattern and text must be at least 1 character long.");
+    const dataOut: DataOutMessagePayload = {
+      matches: null,
+      error: null
+    };
+    
+    try {
+      this.checkInputPayload(message);
+      dataOut.matches = this.solve(message.data);
+    } catch (error) {
+      dataOut.error = error;
     }
-    if (message.data.pattern.length > message.data.text.length) {
-      throw Error("Pattern can't be longer than text.");
+    
+    this.ctx.postMessage(dataOut);
+  }
+
+  private checkInputPayload(message: MessageEvent<DataInMessagePayload>) {
+    const data = message.data;
+
+    if (data.text.length < 1) {
+      throw Error(
+        `Text must be at least 1 character long (is ${data.text.length}).`
+      );
     }
-    const matches = this.solve(message.data);
-    this.ctx.postMessage({
-      matches: matches,
-    });
+    if (data.pattern.length < 1) {
+      throw Error(
+        `Pattern must be at least 1 character long (is ${data.pattern.length}).`
+      );
+    }
+    if (data.pattern.length > data.text.length) {
+      throw Error(
+        `Pattern can't be longer than text 
+        (pattern length: ${data.pattern.length}, 
+        text length: ${data.text.length})`
+      );
+    }
+    if (data.end < 1) {
+      throw Error(`Offset end must be a positive integer (is ${data.end}).`);
+    }
+    if (data.start < 0) {
+      throw Error(`Offset must be a non-negative integer (is ${data.start}).`);
+    }
+    if (data.start > data.end) {
+      throw Error(
+        `Start index (${data.start}) is greater than end index (${data.end}).`
+      );
+    }
+    if (data.end + data.pattern.length - 1 > data.text.length) {
+      throw Error(
+        `Pattern matching (pattern.length ${data.pattern.length})
+        would reach beyond the available text (length ${data.text.length}).`
+      );
+    }
   }
 
   solve(data: DataInMessagePayload): Array<number> {
     const foundMatches: Array<number> = [];
 
-    // Maximum valid index to start pattern matching from.
-    const maxTextIdx = Math.min(
-      data.offset + data.chunkLength - 1,
-      data.text.length - data.pattern.length
-    );
-    for (let textIdx = data.offset; textIdx <= maxTextIdx; ++textIdx) {
+    for (let textIdx = data.start; textIdx < data.end; ++textIdx) {
       let notMatching = false;
 
       // Compare pattern with text substring at textIdx.

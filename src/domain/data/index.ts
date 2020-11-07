@@ -15,30 +15,34 @@ export class DataProvider {
       subStringIndex + this.patternLen
     );
 
-    return new DataSet(
-      this.encoder.encode(text),
-      this.encoder.encode(pattern),
-      text.length
-    );
+    const textEncoded = this.encoder.encode(text);
+    const patternEncoded = this.encoder.encode(pattern);
+
+    if (text.length != this.textLen) {
+      throw Error("DataSet text is not ASCII.");
+    }
+
+    return new DataSet(textEncoded, patternEncoded);
   }
 
-  private getRandomString(length: number, randomString = ""): string {
-    randomString += Math.random().toString(20).substr(2, length);
-    if (randomString.length > length) {
-      return randomString.slice(0, length);
+  private getRandomString(length: number): string {
+    const stringArray = [];
+
+    let currentTextLength = 0;
+
+    while (currentTextLength < length) {
+      const newRandomString = Math.random().toString(20);
+      stringArray.push(newRandomString);
+      currentTextLength += newRandomString.length;
     }
-    return this.getRandomString(length, randomString);
+    
+    return stringArray.join("").slice(0, length);
   }
 }
 
 export class DataSet {
   constructor(
     public readonly text: Uint8Array,
-    public readonly pattern: Uint8Array,
-    public readonly length: number
-  ) {
-    if (this.text.length != this.length) {
-      throw Error("DataSet text is not ASCII.");
-    }
-  }
+    public readonly pattern: Uint8Array
+  ) {}
 }

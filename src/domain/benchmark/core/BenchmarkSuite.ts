@@ -2,7 +2,6 @@ import Benchmark, { BenchmarkConfig, BenchmarkResult } from "./Benchmark";
 import * as stats from "stats-lite";
 export default class BenchmarkSuite {
   private readonly benchmarks: Benchmark[] = [];
-
   constructor(private readonly name: string) {}
 
   add(
