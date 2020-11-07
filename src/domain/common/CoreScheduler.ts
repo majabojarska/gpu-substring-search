@@ -4,6 +4,7 @@ import { DataSet } from "../data/DataSet";
 export default abstract class CoreScheduler {
   protected dataSet = new DataSet(new Uint8Array(), new Uint8Array());
 
+
   generateDataSet(textLen: number, patternLen: number): this {
     const provider = new DataProvider(textLen, patternLen);
     this.dataSet = provider.getRandomDataSet();
@@ -17,4 +18,5 @@ export default abstract class CoreScheduler {
 
   public abstract ready(): Promise<this>;
   public abstract async run(): Promise<number[]>;
+  public abstract setConcurrency(n:number):this
 }

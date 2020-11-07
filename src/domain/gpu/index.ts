@@ -3,7 +3,9 @@ import { GpuScheduler } from "./GpuScheduler";
 
 /** TEMP TEST */
 (async () => {
-  const scheduler = new GpuScheduler().generateDataSet(1_000_000, 7);
+  const scheduler = new GpuScheduler()
+    .setConcurrency(2)
+    .generateDataSet(1_000_000, 7);
   
   const provider = new DataProvider(10,5);
 

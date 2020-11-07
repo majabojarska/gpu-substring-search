@@ -3,7 +3,7 @@ import { CpuScheduler } from "./CpuScheduler";
 /** TEMP TEST */
 (async () => {
   const scheduler = new CpuScheduler()
-    .setWorkerCount(4)
+    .setConcurrency(4)
     .generateDataSet(1_000_000, 7);
   await scheduler.ready();
 
