@@ -1,5 +1,4 @@
 /**
- *
  *  @field pattern  Pattern to find (UTF-8).
  *  @field text  Text to search through (UTF-8).
  */
