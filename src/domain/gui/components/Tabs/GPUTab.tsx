@@ -6,7 +6,7 @@ import {
   TextField,
 } from "@material-ui/core";
 import React, { useState } from "react";
-import { textFieldProps } from "../../components/Common/Props";
+import { textFieldProps } from "../Common/Props";
 import { GeneralConfig } from "../../App";
 import BenchmarkChart, {
   BenchmarkChartDataSeries,
@@ -22,9 +22,10 @@ export interface Props {
   >;
 }
 
-const SingleCoreTab: React.FC<Props> = (props: Props) => {
+const GPUTab: React.FC<Props> = (props: Props) => {
   const { config, dataSeries, setDataSeries } = props;
   const [repeats, setRepeats] = useState(10);
+  const [kernels, setKernels] = useState(2);
   // const [dataSeries, setDataSeries] = useState<BenchmarkChartDataSeries[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -43,11 +44,11 @@ const SingleCoreTab: React.FC<Props> = (props: Props) => {
         textLength.toString(),
         () => new Promise((r) => setTimeout(r, 10)),
         { repeats }
-      );
+      ); // todo: add kernels to benchmark config
     }
     const newDataSeries = {
       dataSet: await bs.run(),
-      name: `CPU SingleCore, Wzorzec ${config.patternLength}, Powtórzenia ${repeats}`,
+      name: `GPU, Wzorzec ${config.patternLength}, Powtórzenia ${repeats}, Wątki ${kernels}`,
     };
     setDataSeries([...dataSeries, newDataSeries]);
     setLoading(false);
@@ -55,12 +56,18 @@ const SingleCoreTab: React.FC<Props> = (props: Props) => {
 
   return (
     <Grid container spacing={1}>
-      <Grid item container justify="flex-end" xs={6}>
+      <Grid item container justify="flex-end" xs={6} spacing={1}>
         <TextField
           onChange={(e) => setRepeats(+e.target.value)}
           value={repeats}
           {...textFieldProps}
           label="Liczba powtórzeń problemu"
+        />
+        <TextField
+          onChange={(e) => setKernels(+e.target.value)}
+          value={kernels}
+          {...textFieldProps}
+          label="Liczba kerneli"
         />
       </Grid>
       <Grid item xs={6} container alignItems="center">
@@ -100,4 +107,4 @@ const SingleCoreTab: React.FC<Props> = (props: Props) => {
   );
 };
 
-export default SingleCoreTab;
+export default GPUTab;
