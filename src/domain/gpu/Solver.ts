@@ -103,8 +103,6 @@ export default class SolverGPU {
     const matches: number[] = [];
 
     (output as Float32Array[]).forEach((chunkArray, chunkArrayIdx) => {
-      let reachedMaxPos = false;
-
       for (let chunkIdx = 0; chunkIdx < words32BitPerKernel; chunkIdx++) {
         // Chunk is a 32-bit number
         for (let bitIdx = 0; bitIdx < 32; bitIdx++) {
@@ -112,15 +110,11 @@ export default class SolverGPU {
           const currentAbsPos =
             chunkArrayIdx * words32BitPerKernel * 32 + chunkIdx * 32 + bitIdx;
           if (currentAbsPos > maxValidMatchPosition) {
-            reachedMaxPos = true;
-            break;
+            return matches;
           } else if (chunkArray[chunkIdx] & (1 << bitIdx)) {
             // Found match
             matches.push(currentAbsPos);
           }
-        }
-        if (reachedMaxPos) {
-          break;
         }
       }
     });
