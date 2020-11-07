@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./styles/App.scss";
 import { makeStyles, Theme } from "@material-ui/core/styles";
 import AppBar from "@material-ui/core/AppBar";
@@ -6,12 +6,13 @@ import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import TabPanel from "./components/TabPanel/TabPanel";
 import ControlPanel from "./components/ControlPanel/ControlPanel";
-import { Container } from "@material-ui/core";
+import { Box, Container, Grid } from "@material-ui/core";
 import SingleCoreTab from "./components/Tabs/SingleCoreTab";
 import MultiCoreTab from "./components/Tabs/MultiCoreTab";
 import GPUTab from "./components/Tabs/GPUTab";
 import SummaryTab from "./components/Tabs/SummaryTab";
 import { BenchmarkChartDataSeries } from "./components/Chart/BenchmarkChart";
+import SysInfo from "./components/ControlPanel/SysInfo";
 
 export interface GeneralConfig {
   textLength: number;
@@ -44,7 +45,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 const App: React.FC = () => {
   const classes = useStyles();
-  const [value, setValue] = useState<number>(0);
+  const [value, setValue] = useState(0);
   const [generalConfig, setGeneralConfig] = useState(defaultGeneralConfig);
   const [CPUSingleDataSeries, setCPUSingleDataSeries] = useState<
     BenchmarkChartDataSeries[]
@@ -56,7 +57,12 @@ const App: React.FC = () => {
     BenchmarkChartDataSeries[]
   >([]);
 
+  useEffect(() => {
+    setValue(+window.location.hash.slice(1));
+  }, []);
+
   const handleChange = (event: React.ChangeEvent, newValue: number) => {
+    window.location.hash = newValue.toString();
     setValue(newValue);
   };
 
@@ -69,12 +75,21 @@ const App: React.FC = () => {
 
   return (
     <div className={classes.root}>
-      <Container fixed maxWidth="sm">
-        <ControlPanel
-          config={generalConfig}
-          setConfig={setGeneralConfig}
-          resetFunc={resetDatasets}
-        />
+      <Container fixed>
+        <Box py={3}>
+          <Grid container alignItems="center">
+            <Grid item sm={6}>
+              <ControlPanel
+                config={generalConfig}
+                setConfig={setGeneralConfig}
+                resetFunc={resetDatasets}
+              />
+            </Grid>
+            <Grid item sm={6}>
+              <SysInfo />
+            </Grid>
+          </Grid>
+        </Box>
       </Container>{" "}
       <AppBar position="static">
         <Container fixed>

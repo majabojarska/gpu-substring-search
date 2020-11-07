@@ -1,8 +1,9 @@
 import { Grid } from "@material-ui/core";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import BenchmarkChart, {
   BenchmarkChartDataSeries,
 } from "../Chart/BenchmarkChart";
+import BenchmarkChartSet from "../Common/BenchmarkChartSet";
 export interface Props {
   SingleDataSeries: BenchmarkChartDataSeries[];
   GPUDataSeries: BenchmarkChartDataSeries[];
@@ -11,25 +12,16 @@ export interface Props {
 
 const GPUTab: React.FC<Props> = (props: Props) => {
   const { SingleDataSeries, MultiDataSeries, GPUDataSeries } = props;
+  const [dataSeries, setDataSeries] = useState([]);
+
+  useEffect(() => {
+    setDataSeries(SingleDataSeries.concat(MultiDataSeries, GPUDataSeries));
+  }, [SingleDataSeries, MultiDataSeries, GPUDataSeries]);
 
   return (
-    <Grid container spacing={1}>
+    <Grid container spacing={2}>
       <Grid item xs={12}>
-        <BenchmarkChart
-          dataSeries={SingleDataSeries.concat(MultiDataSeries, GPUDataSeries)}
-          plottedStat="mean"
-          title="Średni czas wykonania"
-        />
-        <BenchmarkChart
-          dataSeries={SingleDataSeries.concat(MultiDataSeries, GPUDataSeries)}
-          plottedStat="max"
-          title="Maksymalny czas wykonania"
-        />
-        <BenchmarkChart
-          dataSeries={SingleDataSeries.concat(MultiDataSeries, GPUDataSeries)}
-          plottedStat="min"
-          title="Minimalny czas wykonania"
-        />
+        <BenchmarkChartSet dataSeries={dataSeries} />
       </Grid>
     </Grid>
   );

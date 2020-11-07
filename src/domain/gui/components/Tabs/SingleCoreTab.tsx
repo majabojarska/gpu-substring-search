@@ -2,7 +2,9 @@ import {
   Box,
   Button,
   CircularProgress,
+  FormControlLabel,
   Grid,
+  Switch,
   TextField,
 } from "@material-ui/core";
 import React, { useState } from "react";
@@ -14,6 +16,7 @@ import BenchmarkChart, {
 import BenchmarkSuite from "../../../benchmark/core/BenchmarkSuite";
 import { DataProvider } from "../../../data";
 import { HighlightOff } from "@material-ui/icons";
+import BenchmarkChartSet from "../Common/BenchmarkChartSet";
 export interface Props {
   config: GeneralConfig;
   dataSeries: BenchmarkChartDataSeries[];
@@ -25,12 +28,13 @@ export interface Props {
 const SingleCoreTab: React.FC<Props> = (props: Props) => {
   const { config, dataSeries, setDataSeries } = props;
   const [repeats, setRepeats] = useState(10);
-  // const [dataSeries, setDataSeries] = useState<BenchmarkChartDataSeries[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showHis, setShowHis] = useState(false);
 
   const testHandler = async () => {
-    const bs = new BenchmarkSuite(`Single Core x${repeats}`);
     setLoading(true);
+    const bs = new BenchmarkSuite(`Single Core x${repeats}`);
+
     for (let i = 0; i < config.dataSetRepeats; i++) {
       let textLength;
       if (config.exponential)
@@ -47,14 +51,14 @@ const SingleCoreTab: React.FC<Props> = (props: Props) => {
     }
     const newDataSeries = {
       dataSet: await bs.run(),
-      name: `CPU SingleCore, Wzorzec ${config.patternLength}, Powtórzenia ${repeats}`,
+      name: `CPU SC, Wz. ${config.patternLength}, Pwt. ${repeats}`,
     };
     setDataSeries([...dataSeries, newDataSeries]);
     setLoading(false);
   };
 
   return (
-    <Grid container spacing={1}>
+    <Grid container spacing={2}>
       <Grid item container justify="flex-end" xs={6}>
         <TextField
           onChange={(e) => setRepeats(+e.target.value)}
@@ -79,22 +83,21 @@ const SingleCoreTab: React.FC<Props> = (props: Props) => {
         </Box>
         <Box pl={1}>{loading && <CircularProgress size={8 * 4} />}</Box>
       </Grid>
+      <Grid item container justify="flex-end" xs={6}></Grid>
+      <Grid item xs={6} container alignItems="center">
+        <FormControlLabel
+          control={
+            <Switch
+              color="primary"
+              checked={showHis}
+              onChange={(v) => setShowHis(v.target.checked)}
+            />
+          }
+          label="Pokaż histogram"
+        />
+      </Grid>
       <Grid item xs={12}>
-        <BenchmarkChart
-          dataSeries={dataSeries}
-          plottedStat="mean"
-          title="Średni czas wykonania"
-        />
-        <BenchmarkChart
-          dataSeries={dataSeries}
-          plottedStat="max"
-          title="Maksymalny czas wykonania"
-        />
-        <BenchmarkChart
-          dataSeries={dataSeries}
-          plottedStat="min"
-          title="Minimalny czas wykonania"
-        />
+        <BenchmarkChartSet dataSeries={dataSeries} histogram={showHis} />
       </Grid>
     </Grid>
   );
