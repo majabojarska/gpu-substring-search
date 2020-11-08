@@ -3,8 +3,8 @@ import { CpuScheduler } from "./CpuScheduler";
 /** TEMP TEST */
 (async () => {
   const scheduler = new CpuScheduler()
-    .setWorkerCount(4)
-    .generateDataSet(100_000_000, 7);
+    .setConcurrency(4)
+    .generateDataSet(1_000_000, 7);
   await scheduler.ready();
 
   for (const i of Array.from(Array(100).keys())) {

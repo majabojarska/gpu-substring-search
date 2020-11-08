@@ -42,8 +42,23 @@ Example usage:
     .generateDataSet(100_000_000, 7);
   await scheduler.ready(); // wait for all workers to load and respond with `ready` message
 
-    const t1 = performance.now();
-    const result = await scheduler.run()
-    console.log(result, performance.now() - t1);
+  const t1 = performance.now();
+  const result = await scheduler.run()
+  console.log(result, performance.now() - t1);
+})();
+```
+
+## GPU Scheduler
+
+Example usage:
+```ts
+(async () => {
+  const scheduler = new GpuScheduler()
+    .generateDataSet(100_000_000, 7);
+  await scheduler.ready(); // promise to keep common interface
+
+  const t1 = performance.now();
+  const result = await scheduler.run() // promise to keep common interface
+  console.log(result, performance.now() - t1);
 })();
 ```

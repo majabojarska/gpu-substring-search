@@ -1,5 +1,5 @@
 import Worker from "worker-loader!./workers/Solver.worker";
-import CoreScheduler from "./CoreScheduler";
+import CoreScheduler from "../common/CoreScheduler";
 import {
   DataInMessagePayload,
   DataOutMessagePayload,
@@ -17,9 +17,9 @@ interface PoolWorker {
 export class CpuScheduler extends CoreScheduler {
   private workers: PoolWorker[] = [];
 
-  setWorkerCount(count: number): this {
+  setConcurrency(n: number): this {
     this.workers.forEach((w) => w.worker.terminate());
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < n; i++) {
       const worker = new Worker();
       const ready = new Promise<void>((resolve, reject) => {
         worker.onmessage = (message: MessageEvent<WorkerReadyPayload>) => {
