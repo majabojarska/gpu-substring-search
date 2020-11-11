@@ -41,4 +41,7 @@ const BenchmarkChartSet: React.FC<Props> = (props: Props) => {
   );
 };
 
-export default BenchmarkChartSet;
+export default React.memo(
+  BenchmarkChartSet,
+  (o, n) => o.dataSeries === n.dataSeries && o.histogram === n.histogram
+);

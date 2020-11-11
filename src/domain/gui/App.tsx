@@ -23,9 +23,9 @@ export interface GeneralConfig {
 }
 
 export const defaultGeneralConfig: GeneralConfig = {
-  textLength: 100,
+  textLength: 500000,
   patternLength: 7,
-  textLengthDelta: 100,
+  textLengthDelta: 500000,
   dataSetRepeats: 10,
   exponential: false,
 };

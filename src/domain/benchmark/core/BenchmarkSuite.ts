@@ -6,18 +6,17 @@ export default class BenchmarkSuite {
 
   add(
     name: string,
+    preAllFn: () => Promise<void>,
     fn: () => Promise<void>,
     options?: BenchmarkConfig
   ): BenchmarkSuite {
     options = options || { repeats: 1 };
-    this.benchmarks.push(new Benchmark(name, fn, options));
+    this.benchmarks.push(new Benchmark(name, preAllFn, fn, options));
     return this;
   }
 
   async run(): Promise<BenchmarkResult[]> {
-    await new Promise((r) => setTimeout(r, 500));
     const results: BenchmarkResult[] = [];
-
     for (const benchmark of this.benchmarks) {
       const times = await benchmark.runMultiple(benchmark.options.repeats);
       const result = {

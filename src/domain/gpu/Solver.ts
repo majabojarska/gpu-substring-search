@@ -4,15 +4,18 @@ import {
   GPUMode,
   GPUInternalMode,
   KernelOutput,
+  IKernelRunShortcut,
 } from "gpu.js";
 import {
   DataInMessagePayload,
   DataOutMessagePayload,
-  SolveResultPayload,
 } from "./Payloads";
+import _ from "lodash";
 
 export default class SolverGPU {
   private gpu: GPU;
+  private kernel: IKernelRunShortcut | null = null;
+  private lastOutput = 0;
 
   constructor(mode: GPUMode | GPUInternalMode = "gpu") {
     this.gpu = new GPU({ mode });
@@ -22,14 +25,11 @@ export default class SolverGPU {
     const dataOut: DataOutMessagePayload = {
       matches: null,
       error: null,
-      kernelCount: null,
     };
 
     try {
       this.checkInputPayload(dataIn);
-      const { matches, kernelCount } = this._solve(dataIn);
-      dataOut.matches = matches;
-      dataOut.kernelCount = kernelCount;
+      dataOut.matches = this._solve(dataIn);
     } catch (error) {
       dataOut.error = error;
     }
@@ -55,111 +55,55 @@ export default class SolverGPU {
             text length: ${data.text.length})`
       );
     }
-    if (data.words32BitPerKernel > 4 || data.words32BitPerKernel < 1) {
-      throw Error(`words32BitPerKernel must be in range [1;4]`);
-    }
   }
 
-  private _solve(data: DataInMessagePayload): SolveResultPayload {
+  private _solve(data: DataInMessagePayload): number[] {
     // Text length rounded up to nearest chunksPerKernel*32 multiple + text end overlap
-    const positionsPerKernel = data.words32BitPerKernel * 32;
-    const paddedTextLen =
-      Math.ceil(data.text.length / positionsPerKernel) * positionsPerKernel +
-      data.pattern.length -
-      1;
-    const paddedText = new Uint8Array(paddedTextLen);
-    paddedText.set(data.text, 0);
+    const { text, pattern } = data;
+    const nKernels = text.length - pattern.length;
 
-    const kernelCount = Math.ceil(data.text.length / positionsPerKernel);
-    const kernel = this.gpu
-      .createKernel(this.kernelFunction)
-      .setOutput([kernelCount]);
+    const kernel = this.getKernel(nKernels).setConstants({
+      patternLength: pattern.length,
+    });
     const output: KernelOutput = kernel(
-      (paddedText as unknown) as number[],
-      (data.pattern as unknown) as number[],
-      data.pattern.length,
-      data.words32BitPerKernel
+      (text as unknown) as number[],
+      (pattern as unknown) as number[]
     );
 
-    const maxValidMatchPosition = data.text.length - data.pattern.length;
-
-    const result = {
-      matches: this.extractMatches(
-        output,
-        maxValidMatchPosition,
-        data.words32BitPerKernel
-      ),
-      kernelCount: kernelCount,
-    };
-
-    return result;
+    return (output as number[]).filter((matchPosition) => matchPosition !== -1);
   }
 
-  private extractMatches(
-    output: KernelOutput,
-    maxValidMatchPosition: number,
-    words32BitPerKernel: number
-  ) {
-    const matches: number[] = [];
-
-    (output as Float32Array[]).forEach((chunkArray, chunkArrayIdx) => {
-      for (let chunkIdx = 0; chunkIdx < words32BitPerKernel; chunkIdx++) {
-        // Chunk is a 32-bit number
-        for (let bitIdx = 0; bitIdx < 32; bitIdx++) {
-          // Current position relative to text start
-          const currentAbsPos =
-            chunkArrayIdx * words32BitPerKernel * 32 + chunkIdx * 32 + bitIdx;
-          if (currentAbsPos > maxValidMatchPosition) {
-            return matches;
-          } else if (chunkArray[chunkIdx] & (1 << bitIdx)) {
-            // Found match
-            matches.push(currentAbsPos);
-          }
-        }
-      }
-    });
-
-    return matches;
+  private getKernel(n: number) {
+    if (n == this.lastOutput) {
+      return this.kernel;
+    } else {
+      this.lastOutput = n;
+      return (this.kernel = this.gpu.createKernel(this.kernelFunction, {
+        optimizeFloatMemory: true,
+        output: [n],
+      }));
+    }
   }
 
   /**
-   * Each kernel handles 32*chunkCount positions.
-   * Returns number[] of size 4.
+   * Each kernel handles exact matching on one position.
+   * Returns -1 if not matching.
+   * Returns matching position (this.thread.x) if match is found.
    */
-  private kernelFunction: KernelFunction = function (
-    text: number[],
-    pattern: number[],
-    patternLen: number,
-    chunkCount: number
-  ): number[] {
-    const startPosition: number = this.thread.x * 32 * chunkCount;
-
-    // Allocate 32x4 bits, each bit is a match flag.
-    const matches: number[] = [0, 0, 0, 0];
-
-    // Iterate over 32-bit chunks
-    for (let chunkIdx = 0; chunkIdx < chunkCount; chunkIdx++) {
-      // Iterate over bits in chunk
-      for (let bitPosInChunk = 0; bitPosInChunk < 32; bitPosInChunk++) {
-        // Match pattern on relativePos
-        let isMatch = true;
-        for (let patternIdx = 0; patternIdx < patternLen; patternIdx++) {
-          if (
-            text[startPosition + chunkIdx * 32 + bitPosInChunk + patternIdx] !=
-            pattern[patternIdx]
-          ) {
-            // Mismatch, skip to next pattern matching position
-            isMatch = false;
-            break;
-          }
-        }
-        if (isMatch) {
-          // Match found, set flag to 1
-          matches[chunkIdx] = matches[chunkIdx] | (1 << bitPosInChunk);
-        }
+  private kernelFunction: KernelFunction<
+    [number[], number[]],
+    { patternLength: number }
+  > = function (text: number[], pattern: number[]): number {
+    // Match pattern on relativePos
+    for (
+      let patternIdx = 0;
+      patternIdx < this.constants.patternLength;
+      patternIdx++
+    ) {
+      if (text[this.thread.x + patternIdx] != pattern[patternIdx]) {
+        return -1;
       }
     }
-
-    return matches;
+    return this.thread.x;
   };
 }

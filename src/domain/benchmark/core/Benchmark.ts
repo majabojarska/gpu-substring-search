@@ -17,6 +17,7 @@ export interface BenchmarkResult {
 export default class Benchmark {
   constructor(
     public readonly name: string,
+    private readonly preAllFn: () => Promise<void>,
     private readonly fn: () => Promise<void>,
     public readonly options: BenchmarkConfig
   ) {}
@@ -29,6 +30,7 @@ export default class Benchmark {
   }
 
   public async runMultiple(times: number): Promise<number[]> {
+    await this.preAllFn();
     const results: number[] = [];
     for (let index = 0; index < times; index++) {
       results.push(await this.runSingle());

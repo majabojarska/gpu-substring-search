@@ -7,7 +7,7 @@ import {
   Switch,
   TextField,
 } from "@material-ui/core";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { textFieldProps } from "../Common/Props";
 import { GeneralConfig } from "../../App";
 import { BenchmarkChartDataSeries } from "../Chart/BenchmarkChart";
@@ -15,6 +15,7 @@ import BenchmarkSuite from "../../../benchmark/core/BenchmarkSuite";
 import { DataProvider } from "../../../data/DataProvider";
 import { HighlightOff } from "@material-ui/icons";
 import BenchmarkChartSet from "../Common/BenchmarkChartSet";
+import { CpuScheduler } from "../../../cpu/CpuScheduler";
 export interface Props {
   config: GeneralConfig;
   dataSeries: BenchmarkChartDataSeries[];
@@ -26,34 +27,43 @@ export interface Props {
 const MultiCoreTab: React.FC<Props> = (props: Props) => {
   const { config, dataSeries, setDataSeries } = props;
   const [repeats, setRepeats] = useState(10);
-  const [theads, setTheads] = useState(2);
+  const [threads, setThreads] = useState(2);
   const [loading, setLoading] = useState(false);
   const [showHis, setShowHis] = useState(false);
 
-  const testHandler = async () => {
-    const bs = new BenchmarkSuite(`Single Core x${repeats}`);
+  const testHandler = useCallback(async () => {
     setLoading(true);
+    const bs = new BenchmarkSuite(`Multi Core x${repeats}`);
+    const scheduler = new CpuScheduler().setConcurrency(threads);
+    await scheduler.ready();
+
     for (let i = 0; i < config.dataSetRepeats; i++) {
-      let textLength;
+      let textLength: number;
       if (config.exponential)
         textLength = config.textLength * config.textLengthDelta ** (i + 1);
       else textLength = config.textLength + i * config.textLengthDelta;
 
       const patternLength = config.patternLength;
-      const provider = new DataProvider(textLength, patternLength);
+
       bs.add(
         textLength.toString(),
-        () => new Promise((r) => setTimeout(r, 10)),
+        async () => {
+          const provider = new DataProvider(textLength, patternLength);
+          scheduler.setDataSet(provider.getRandomDataSet());
+        },
+        async () => {
+          await scheduler.run();
+        },
         { repeats }
-      ); // todo: add theads to benchmark config
+      );
     }
     const newDataSeries = {
       dataSet: await bs.run(),
-      name: `CPU MC ${theads}, Wz. ${config.patternLength}, Pwt. ${repeats}`,
+      name: `CPU MC ${threads}, Wz. ${config.patternLength}, Pwt. ${repeats}`,
     };
     setDataSeries([...dataSeries, newDataSeries]);
     setLoading(false);
-  };
+  }, [config, dataSeries, threads, repeats]);
 
   return (
     <Grid container spacing={2}>
@@ -83,8 +93,8 @@ const MultiCoreTab: React.FC<Props> = (props: Props) => {
       </Grid>
       <Grid item container justify="flex-end" xs={6}>
         <TextField
-          onChange={(e) => setTheads(+e.target.value)}
-          value={theads}
+          onChange={(e) => setThreads(+e.target.value)}
+          value={threads}
           {...textFieldProps}
           label="Liczba wątków"
         />

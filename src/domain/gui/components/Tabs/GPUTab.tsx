@@ -7,7 +7,7 @@ import {
   Switch,
   TextField,
 } from "@material-ui/core";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { textFieldProps } from "../Common/Props";
 import { GeneralConfig } from "../../App";
 import { BenchmarkChartDataSeries } from "../Chart/BenchmarkChart";
@@ -15,6 +15,7 @@ import BenchmarkSuite from "../../../benchmark/core/BenchmarkSuite";
 import { DataProvider } from "../../../data/DataProvider";
 import { HighlightOff } from "@material-ui/icons";
 import BenchmarkChartSet from "../Common/BenchmarkChartSet";
+import { GpuScheduler } from "../../../gpu/GpuScheduler";
 
 export interface Props {
   config: GeneralConfig;
@@ -27,34 +28,42 @@ export interface Props {
 const GPUTab: React.FC<Props> = (props: Props) => {
   const { config, dataSeries, setDataSeries } = props;
   const [repeats, setRepeats] = useState(10);
-  const [kernels, setKernels] = useState(2);
   const [loading, setLoading] = useState(false);
   const [showHis, setShowHis] = useState(false);
 
-  const testHandler = async () => {
-    const bs = new BenchmarkSuite(`Single Core x${repeats}`);
+  const testHandler = useCallback(async () => {
     setLoading(true);
+    const bs = new BenchmarkSuite(`GPU x${repeats}`);
+    const scheduler = new GpuScheduler().setConcurrency(1);
+    await scheduler.ready();
+
     for (let i = 0; i < config.dataSetRepeats; i++) {
-      let textLength;
+      let textLength: number;
       if (config.exponential)
         textLength = config.textLength * config.textLengthDelta ** (i + 1);
       else textLength = config.textLength + i * config.textLengthDelta;
 
       const patternLength = config.patternLength;
-      const provider = new DataProvider(textLength, patternLength);
+
       bs.add(
         textLength.toString(),
-        () => new Promise((r) => setTimeout(r, 10)),
+        async () => {
+          const provider = new DataProvider(textLength, patternLength);
+          scheduler.setDataSet(provider.getRandomDataSet());
+        },
+        async () => {
+          await scheduler.run();
+        },
         { repeats }
-      ); // todo: add kernels to benchmark config
+      );
     }
     const newDataSeries = {
       dataSet: await bs.run(),
-      name: `GPU L ${kernels}, Wz. ${config.patternLength}, Pwt. ${repeats}`,
+      name: `GPU, Wz. ${config.patternLength}, Pwt. ${repeats}`,
     };
     setDataSeries([...dataSeries, newDataSeries]);
     setLoading(false);
-  };
+  }, [config, dataSeries, repeats]);
 
   return (
     <Grid container spacing={2}>
@@ -83,15 +92,6 @@ const GPUTab: React.FC<Props> = (props: Props) => {
         <Box pl={1}>{loading && <CircularProgress size={8 * 4} />}</Box>
       </Grid>
       <Grid item container justify="flex-end" xs={6}>
-        <TextField
-          onChange={(e) => setKernels(+e.target.value)}
-          value={kernels}
-          {...textFieldProps}
-          label="Długość wyniku kernela (x32b)"
-          InputProps={{
-            inputProps: { min: 1, max: 4, style: { width: "218px" } },
-          }}
-        />
       </Grid>
       <Grid item xs={6} container alignItems="center">
         <FormControlLabel
