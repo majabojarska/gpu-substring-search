@@ -14,7 +14,7 @@ import  {
   BenchmarkChartDataSeries,
 } from "../Chart/BenchmarkChart";
 import BenchmarkSuite from "../../../benchmark/core/BenchmarkSuite";
-import { DataProvider } from "../../../data";
+import { DataProvider } from "../../../data/DataProvider";
 import { HighlightOff } from "@material-ui/icons";
 import BenchmarkChartSet from "../Common/BenchmarkChartSet";
 export interface Props {
