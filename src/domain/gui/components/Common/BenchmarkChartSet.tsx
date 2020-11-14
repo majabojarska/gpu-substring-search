@@ -1,7 +1,8 @@
-import React from "react";
 import BenchmarkChart, {
   BenchmarkChartDataSeries,
 } from "../Chart/BenchmarkChart";
+
+import React from "react";
 
 interface Props {
   dataSeries: BenchmarkChartDataSeries[];

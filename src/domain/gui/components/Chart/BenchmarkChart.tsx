@@ -1,7 +1,8 @@
-import { useTheme } from "@material-ui/core";
-import React, { useState, useEffect } from "react";
-import Plot from "react-plotly.js";
+import React, { useEffect, useState } from "react";
+
 import { BenchmarkResult } from "../../../benchmark/core/Benchmark";
+import Plot from "react-plotly.js";
+import { useTheme } from "@material-ui/core/styles";
 
 interface Props {
   dataSeries: BenchmarkChartDataSeries[];

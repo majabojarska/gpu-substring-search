@@ -1,6 +1,12 @@
 import * as path from "path";
 import * as webpack from "webpack";
 
+import ESLintPlugin from "eslint-webpack-plugin";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import ReactRefreshWebpackPlugin from "@pmmmwh/react-refresh-webpack-plugin";
+import TerserPlugin from "terser-webpack-plugin";
+
 /*
  * SplitChunksPlugin is enabled by default and replaced
  * deprecated CommonsChunkPlugin. It automatically identifies modules which
@@ -23,8 +29,6 @@ import * as webpack from "webpack";
  *
  */
 
-import MiniCssExtractPlugin from "mini-css-extract-plugin";
-
 /*
  * We've enabled TerserPlugin for you! This minifies your app
  * in order to load faster and run less javascript.
@@ -33,16 +37,7 @@ import MiniCssExtractPlugin from "mini-css-extract-plugin";
  *
  */
 
-import TerserPlugin from "terser-webpack-plugin";
-
-import HtmlWebpackPlugin from "html-webpack-plugin";
-
-import ESLintPlugin from "eslint-webpack-plugin";
-
-import ReactRefreshWebpackPlugin from "@pmmmwh/react-refresh-webpack-plugin";
-
 export default {
-  mode: process.env.NODE_ENV == "production" ? "production" : "development",
   entry: "./src/index.ts",
 
   plugins: [
@@ -53,7 +48,6 @@ export default {
       template: path.join(__dirname, "./template/index.html"),
     }),
     new ESLintPlugin({ context: "./src", extensions: ["js", "ts", "tsx"] }),
-    new webpack.HotModuleReplacementPlugin(),
     new ReactRefreshWebpackPlugin(),
   ],
 
@@ -63,7 +57,18 @@ export default {
         test: /\.(ts|tsx)$/,
         loader: "ts-loader",
         include: [path.resolve(__dirname, "src")],
-        exclude: [/node_modules/],
+        exclude: /node_modules/,
+      },
+      {
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
+      {
+        test: /\.m?js$/,
+        exclude: /node_modules/,
+        loader: "babel-loader",
       },
       {
         test: /.(scss|css)$/,
@@ -85,12 +90,6 @@ export default {
           },
         ],
       },
-      {
-        test: /\.m?js/,
-        resolve: {
-          fullySpecified: false,
-        },
-      },
     ],
   },
 
@@ -99,25 +98,11 @@ export default {
   },
 
   optimization: {
-    minimizer: [new TerserPlugin()],
-
-    splitChunks: {
-      cacheGroups: {
-        vendors: {
-          priority: -10,
-          test: /[\\/]node_modules[\\/]/,
-        },
-      },
-
-      chunks: "async",
-      minChunks: 1,
-      minSize: 30000,
-      //name: true
-    },
-  },
-  devServer: { hot: true },
-  devtool: "eval-source-map",
-  stats: {
-    errorDetails: true,
+    minimizer: [
+      new TerserPlugin({
+        parallel: true,
+      }),
+    ],
+    usedExports: true,
   },
 };

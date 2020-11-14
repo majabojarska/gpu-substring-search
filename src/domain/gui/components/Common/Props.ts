@@ -1,4 +1,4 @@
-import { OutlinedTextFieldProps } from "@material-ui/core";
+import { OutlinedTextFieldProps } from "@material-ui/core/TextField";
 
 export const textFieldProps: OutlinedTextFieldProps = {
   type: "number",

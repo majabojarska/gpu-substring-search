@@ -1,7 +1,9 @@
-import { Box, Grid, Typography } from "@material-ui/core";
+import Box from "@material-ui/core/Box";
+import Grid from "@material-ui/core/Grid";
 import React from "react";
-import platform from "platform";
+import Typography from "@material-ui/core/Typography";
 import gpuInfo from "webgl-info";
+import platform from "platform";
 const gpu = gpuInfo();
 
 const SysInfo: React.FC = () => {
