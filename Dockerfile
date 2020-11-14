@@ -1,4 +1,7 @@
 FROM node:lts-alpine
-WORKDIR app
+WORKDIR /app
 COPY dist dist/
-CMD npx http-server dist -p 2137
+COPY docker docker
+WORKDIR /app/docker
+RUN npm install
+CMD npm start
