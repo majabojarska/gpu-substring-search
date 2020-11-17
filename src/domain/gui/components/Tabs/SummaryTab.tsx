@@ -1,9 +1,8 @@
-import { Grid } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
-import  {
-  BenchmarkChartDataSeries,
-} from "../Chart/BenchmarkChart";
+
+import { BenchmarkChartDataSeries } from "../Chart/BenchmarkChart";
 import BenchmarkChartSet from "../Common/BenchmarkChartSet";
+import Grid from "@material-ui/core/Grid";
 export interface Props {
   SingleDataSeries: BenchmarkChartDataSeries[];
   GPUDataSeries: BenchmarkChartDataSeries[];

@@ -1,18 +1,22 @@
-import React, { useEffect, useState } from "react";
 import "./styles/App.scss";
-import { makeStyles, Theme } from "@material-ui/core/styles";
+
+import React, { useEffect, useState } from "react";
+import { Theme, makeStyles } from "@material-ui/core/styles";
+
 import AppBar from "@material-ui/core/AppBar";
-import Tabs from "@material-ui/core/Tabs";
+import { BenchmarkChartDataSeries } from "./components/Chart/BenchmarkChart";
+import Box from "@material-ui/core/Box";
+import Container from "@material-ui/core/Container";
+import ControlPanel from "./components/ControlPanel/ControlPanel";
+import GPUTab from "./components/Tabs/GPUTab";
+import Grid from "@material-ui/core/Grid";
+import MultiCoreTab from "./components/Tabs/MultiCoreTab";
+import SingleCoreTab from "./components/Tabs/SingleCoreTab";
+import SummaryTab from "./components/Tabs/SummaryTab";
+import SysInfo from "./components/ControlPanel/SysInfo";
 import Tab from "@material-ui/core/Tab";
 import TabPanel from "./components/TabPanel/TabPanel";
-import ControlPanel from "./components/ControlPanel/ControlPanel";
-import { Box, Container, Grid } from "@material-ui/core";
-import SingleCoreTab from "./components/Tabs/SingleCoreTab";
-import MultiCoreTab from "./components/Tabs/MultiCoreTab";
-import GPUTab from "./components/Tabs/GPUTab";
-import SummaryTab from "./components/Tabs/SummaryTab";
-import { BenchmarkChartDataSeries } from "./components/Chart/BenchmarkChart";
-import SysInfo from "./components/ControlPanel/SysInfo";
+import Tabs from "@material-ui/core/Tabs";
 
 export interface GeneralConfig {
   textLength: number;
@@ -90,7 +94,7 @@ const App: React.FC = () => {
             </Grid>
           </Grid>
         </Box>
-      </Container>{" "}
+      </Container>
       <AppBar position="static">
         <Container fixed>
           <Tabs value={value} onChange={handleChange} variant="fullWidth">

@@ -1,21 +1,21 @@
-import {
-  Box,
-  Button,
-  CircularProgress,
-  FormControlLabel,
-  Grid,
-  Switch,
-  TextField,
-} from "@material-ui/core";
 import React, { useCallback, useState } from "react";
-import { textFieldProps } from "../Common/Props";
-import { GeneralConfig } from "../../App";
+
 import { BenchmarkChartDataSeries } from "../Chart/BenchmarkChart";
-import BenchmarkSuite from "../../../benchmark/core/BenchmarkSuite";
-import { DataProvider } from "../../../data/DataProvider";
-import { HighlightOff } from "@material-ui/icons";
 import BenchmarkChartSet from "../Common/BenchmarkChartSet";
+import BenchmarkSuite from "../../../benchmark/core/BenchmarkSuite";
+import Box from "@material-ui/core/Box";
+import Button from "@material-ui/core/Button";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import { CpuScheduler } from "../../../cpu/CpuScheduler";
+import { DataProvider } from "../../../data/DataProvider";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import { GeneralConfig } from "../../App";
+import Grid from "@material-ui/core/Grid";
+import HighlightOff from "@material-ui/icons/HighlightOff";
+import Switch from "@material-ui/core/Switch";
+import TextField from "@material-ui/core/TextField";
+import { textFieldProps } from "../Common/Props";
+
 export interface Props {
   config: GeneralConfig;
   dataSeries: BenchmarkChartDataSeries[];
