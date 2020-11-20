@@ -1,0 +1,49 @@
+@startuml
+
+' Participants
+actor User
+boundary GUI
+participant CpuScheduler
+collections CpuSolver
+database DataProvider
+
+' Sequence
+
+User --> GUI : Request test
+GUI -> DataProvider **
+activate DataProvider
+GUI -> CpuScheduler **
+activate CpuScheduler
+GUI -> CpuScheduler : setConcurrency()
+CpuScheduler -> CpuSolver **
+
+activate CpuSolver
+CpuScheduler <-- CpuSolver : ready
+
+GUI -> CpuScheduler : ready()
+GUI <-- CpuScheduler : 
+GUI -> DataProvider : getRandomDataSet()
+GUI <-- DataProvider : DataSet
+GUI -> CpuScheduler : setDataSet()
+
+GUI -> CpuScheduler : run()
+loop workerCount times
+CpuScheduler -> CpuScheduler : runSingle()
+    activate CpuScheduler
+    CpuScheduler -> CpuSolver : run()
+    activate CpuSolver
+    CpuScheduler <-- CpuSolver : Results (per worker)
+    deactivate CpuSolver
+    deactivate CpuScheduler
+end
+deactivate CpuSolver
+
+GUI <-- CpuScheduler : Results (all workers)
+deactivate DataProvider
+deactivate CpuScheduler
+
+User <-- GUI : Show test results
+
+
+
+@enduml

@@ -1,0 +1,65 @@
+@startuml
+
+' Participants
+actor User
+boundary GUI
+participant GpuScheduler
+collections GpuSolver
+participant Kernel
+participant GPU
+database DataProvider
+
+' Sequence
+
+User --> GUI : Request test
+GUI -> GpuScheduler **
+GUI -> DataProvider **
+GpuScheduler -> GpuSolver **
+activate DataProvider
+activate GpuScheduler
+
+GpuSolver -> GPU **
+activate GPU
+
+activate GpuSolver
+GpuScheduler <-- GpuSolver : ready
+
+GUI -> GpuScheduler : ready()
+GUI <-- GpuScheduler
+GUI -> DataProvider : getRandomDataSet()
+GUI <-- DataProvider : DataSet
+GUI -> GpuScheduler : setDataSet()
+
+GUI -> GpuScheduler : run()
+
+GpuScheduler -> GpuSolver : solve()
+activate GpuSolver
+GpuSolver -> GPU : createKernel()
+GPU -> Kernel **
+GPU <- Kernel : kernel instance
+activate Kernel
+
+GpuSolver <- GPU : kernel instance
+
+GpuSolver -> GpuSolver : _solve()
+activate GpuSolver
+GpuSolver -> Kernel : Run kernel
+GpuSolver <- Kernel : Raw output
+
+GpuSolver -> GpuSolver : Processed results
+deactivate GpuSolver
+
+
+GpuScheduler <-- GpuSolver : Results
+deactivate GpuSolver
+
+GUI <-- GpuScheduler : Results
+deactivate Kernel
+deactivate GPU
+deactivate GpuSolver
+deactivate GpuScheduler
+deactivate DataProvider
+
+User <-- GUI : Show test results
+
+@enduml

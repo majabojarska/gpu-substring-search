@@ -1,0 +1,76 @@
+@startuml
+class DataSet {
+    +text: Uint8Array
+    +pattern: Uint8Array
+}
+class DataProvider {
+    -encoder: TextEncoder
+    -textLen: number
+    -patternLen: number
+    +getRandomDataSet(): DataSet
+    +getCustomDataSet(text: string, pattern: string): DataSet
+    -createDataSet(text: string, pattern: string): DataSet
+    -getRandomString(length: number): string
+}
+
+abstract class CoreScheduler {
+    #dataSet: DataSet
+    +generateDataSet(textLen: number, patternLen: number): this
+    +setDataSet(dataSet: DataSet): this
+    +{abstract} ready(): Promise<this>
+    +{abstract} run(): Promise<number[]>
+    +{abstract} setConcurrency(n: number): this
+}
+
+interface WorkerReadyPayload {
+    +ready: true
+}
+class CpuScheduler extends CoreScheduler {
+    -workers: PoolWorker[]
+    -runSingle(worker: any, start: number, end: number): Promise<number[]>
+}
+
+interface PoolWorker {
+    +worker: any
+    +ready: Promise<void>
+}
+
+interface DataInMessageBasePayload {
+    +pattern: Uint8Array
+    +text: Uint8Array
+}
+interface DataOutMessageBasePayload {
+    +matches: number[]
+    +error: Error
+}
+
+interface DataInMessagePayload {
+    +start: number
+    +end: number
+}
+interface WorkerReadyPayload {
+    +ready: true
+}
+class SolverCPU {
+    -ctx: Worker
+    +handleMessage(message: MessageEvent<DataInMessagePayload>): void
+    -checkInputPayload(data: DataInMessagePayload): void
+    +solve(data: DataInMessagePayload): number[]
+}
+
+' Relations
+
+CoreScheduler "1" *-up-> DataSet
+DataSet <.right. DataProvider
+
+CpuScheduler "0..*" *--> PoolWorker
+SolverCPU "1" *--> PoolWorker
+
+CpuScheduler -down-> SolverCPU
+
+CpuScheduler .right.> WorkerReadyPayload
+CpuScheduler .left.> DataInMessagePayload
+CpuScheduler .down.> DataOutMessageBasePayload
+DataInMessagePayload -up-|> DataInMessageBasePayload
+
+@enduml

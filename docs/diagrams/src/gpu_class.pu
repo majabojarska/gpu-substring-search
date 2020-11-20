@@ -1,0 +1,56 @@
+@startuml
+
+class DataSet {
+    +text: Uint8Array
+    +pattern: Uint8Array
+}
+class DataProvider {
+    -encoder: TextEncoder
+    -textLen: number
+    -patternLen: number
+    +getRandomDataSet(): DataSet
+    +getCustomDataSet(text: string, pattern: string): DataSet
+    -createDataSet(text: string, pattern: string): DataSet
+    -getRandomString(length: number): string
+}
+abstract class CoreScheduler {
+    #dataSet: DataSet
+    +generateDataSet(textLen: number, patternLen: number): this
+    +setDataSet(dataSet: DataSet): this
+    +{abstract} ready(): Promise<this>
+    +{abstract} run(): Promise<number[]>
+    +{abstract} setConcurrency(n: number): this
+}
+interface DataInMessageBasePayload {
+    +pattern: Uint8Array
+    +text: Uint8Array
+}
+interface DataOutMessageBasePayload {
+    +matches: number[]
+    +error: Error
+}
+class SolverGPU {
+    -gpu: GPU
+    -kernel: IKernelRunShortcut
+    -lastOutput: number
+    +solve(dataIn: DataInMessagePayload): DataOutMessagePayload
+    -checkInputPayload(data: DataInMessagePayload): void
+    -_solve(data: DataInMessagePayload): number[]
+    -getKernel(n: number): IKernelRunShortcut
+    -kernelFunction: KernelFunction<[number[], number[]], { patternLength: number; }>
+}
+class GpuScheduler extends CoreScheduler {
+    +solver: SolverGPU
+}
+
+' Relations
+
+GpuScheduler .right.> DataOutMessageBasePayload
+GpuScheduler .right.> DataInMessageBasePayload
+GpuScheduler "1" *-left-> DataSet
+GpuScheduler "1" *-down-> SolverGPU
+
+
+DataProvider ..> DataSet
+
+@enduml
