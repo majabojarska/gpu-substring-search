@@ -77,7 +77,7 @@ const ControlPanel: React.FC<ConfigProps> = (props: ConfigProps) => {
           <TextField
             onChange={(e) => setDataSetRepeats(+e.target.value)}
             value={dataSetRepeats}
-            label="Liczba iteracji"
+            label="Liczba zwiększeń problemu"
             {...textFieldProps}
           />
         </Grid>

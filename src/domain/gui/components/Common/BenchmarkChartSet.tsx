@@ -15,6 +15,7 @@ const BenchmarkChartSet: React.FC<Props> = (props: Props) => {
       <BenchmarkChart
         dataSeries={props.dataSeries}
         plottedStat="mean"
+        plottedErrors="sd"
         title="Średni czas wykonania"
         histogram={props.histogram}
       />

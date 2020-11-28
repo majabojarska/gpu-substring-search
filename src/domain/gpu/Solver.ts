@@ -10,7 +10,6 @@ import {
   DataInMessagePayload,
   DataOutMessagePayload,
 } from "./Payloads";
-import _ from "lodash";
 
 export default class SolverGPU {
   private gpu: GPU;

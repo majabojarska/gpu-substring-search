@@ -13,8 +13,8 @@ export class GpuScheduler extends CoreScheduler {
   /**
    * @param n Defines how many 32-position multiples are handled by each kernel.
    */
-  public setConcurrency(n:number):this{
-    return this
+  public setConcurrency(_n: number): this {
+    return this;
   }
 
   /** Ready instantly */
@@ -26,7 +26,7 @@ export class GpuScheduler extends CoreScheduler {
     const dataIn: DataInMessagePayload = {
       text: this.dataSet.text,
       pattern: this.dataSet.pattern,
-    }; 
+    };
     const dataOut = this.solver.solve(dataIn);
     if (dataOut.error) return Promise.reject(dataOut.error);
     return dataOut.matches;
