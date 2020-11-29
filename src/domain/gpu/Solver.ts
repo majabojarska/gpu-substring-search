@@ -6,10 +6,7 @@ import {
   KernelOutput,
   IKernelRunShortcut,
 } from "gpu.js";
-import {
-  DataInMessagePayload,
-  DataOutMessagePayload,
-} from "./Payloads";
+import { DataInMessagePayload, DataOutMessagePayload } from "./Payloads";
 
 export default class SolverGPU {
   private gpu: GPU;

@@ -1,4 +1,5 @@
 @startuml
+scale 2
 
 ' Participants
 actor User

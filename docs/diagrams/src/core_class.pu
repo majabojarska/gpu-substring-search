@@ -1,0 +1,42 @@
+@startuml
+scale 2
+
+abstract class CoreScheduler {
+    #dataSet: DataSet
+    +generateDataSet(textLen: number, patternLen: number): this
+    +setDataSet(dataSet: DataSet): this
+    +{abstract} ready(): Promise<this>
+    +{abstract} run(): Promise<number[]>
+    +{abstract} setConcurrency(n: number): this
+}
+
+interface DataInMessageBasePayload {
+    +pattern: Uint8Array
+    +text: Uint8Array
+}
+interface DataOutMessageBasePayload {
+    +matches: number[]
+    +error: Error
+}
+
+class DataSet {
+    +text: Uint8Array
+    +pattern: Uint8Array
+}
+class DataProvider {
+    -encoder: TextEncoder
+    -textLen: number
+    -patternLen: number
+    +getRandomDataSet(): DataSet
+    +getCustomDataSet(text: string, pattern: string): DataSet
+    -createDataSet(text: string, pattern: string): DataSet
+    -getRandomString(length: number): string
+}
+
+CoreScheduler "1" *-up-> DataSet
+DataSet <.right. DataProvider
+
+CoreScheduler .left.> DataInMessageBasePayload
+CoreScheduler .down.> DataOutMessageBasePayload
+
+@enduml

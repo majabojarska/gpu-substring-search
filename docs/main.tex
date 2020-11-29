@@ -1,9 +1,11 @@
 \documentclass[12pt]{article}
+\usepackage{amssymb}
 \usepackage{scrextend}
 \usepackage[utf8]{inputenc}
 \usepackage[polish]{babel}
-\usepackage[T1]{fontenc}%polskie znaki
-\usepackage[utf8]{inputenc}%polskie znaki
+\usepackage{indentfirst}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 \usepackage{geometry}
 \usepackage{float}
 \usepackage{enumitem}
@@ -17,12 +19,16 @@
 \usepackage{listings}
 \usepackage{xcolor}
 
+\newcommand\todo[1]{\textcolor{red}{#1}}
+
 \usepackage{graphicx}
 \graphicspath{ {img/} }
 \newgeometry{lmargin=2.0cm, rmargin=2.0cm, tmargin=2.0cm, bmargin=2.0cm}
 
 \renewcommand{\baselinestretch}{1.5}
 \newcommand{\paragraphnewline}[1]{\paragraph{#1}\mbox{}\\}
+
+\bibliographystyle{ieeetr}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -65,23 +71,30 @@
 }
 \renewcommand{\lstlistlistingname}{Spis listingów}\lstset{style=mystyle}
 
+\widowpenalty 10000
+\clubpenalty 10000
+
 \begin{document}
 
 % Titlepage
-\input{parts/titlepage.tex}
+\input{parts/00-titlepage.tex}
 
 % TOC
 \clearpage
 \setcounter{tocdepth}{2}
 \localtableofcontents
 \listoffigures
-\lstlistoflistings
+% \lstlistoflistings
 
 % Parts
 \clearpage
-\input{parts/placeholder.tex}
+\input{parts/01-intro.tex}
+\input{parts/02-implementation.tex}
+\input{parts/03-results.tex}
+\input{parts/04-outro.tex}
 
 % Citations
-\input{parts/bib.tex}
+\clearpage
+\bibliography{bibliography}
 
 \end{document}

@@ -1,0 +1,10 @@
+\section{Wnioski i~podsumowanie}
+% @everyone - Kuba
+% @everyone
+% Nie ma co się rozbijać na 100 sekcji
+
+Po wykonaniu badań zaimplementowanych algorytmów można stwierdzić, że akceleracji przy obecnych implementacjach nie udało się uzyskać. Jest to skutkiem zarówno charakterystyki problemu, jak i pośrednika w postaci frameworka GPU.js, które posiada swoje ograniczenia.
+
+Rozwiązaniem, które pomogłoby zwiększyć wydajność analizowanego algorytmu, czyli wariantu ,,brute force'', byłoby rozwiązanie hybrydowe. W~rozwiązaniu takim GPU byłoby odpowiedzialne za sprawdzenie dopasowania wzorca w~tekście dla każdej pozycji. CPU, za pomocą wielu wątków, agregowałby wyniki do oczekiwanej postaci tablicy wystąpień. Akceleracji uległby czas wykonania metody \texttt{filter}, która zajmuje zdecydowaną większość czasu jednego wykonania, co widać na rysunku~\ref{fig:profiler_gpu}. Akceleracja taka będzie efektywna dla dużych rozmiarów problemu, ponieważ w~analizie trzeba wziąć pod uwagę zróżnicowany czas komunikacji z~Workerami.
+
+Do udanych można zaliczyć implementację algorytmu w 3 wariantach, gdyż zaproponowane rozwiązanie jest sprawne. Okazało się, że w odpowiednich warunkach akceleracja może być osiągnięta nawet w środowisku przeglądarki internetowej, które nie podlega kontroli ze strony specjalistycznego oprogramowania -- chociażby operującego na poziomie elementarnych instrukcji GPU środowiska CUDA. Niewątpliwie, wykorzystany framework GPU.js akcelerację umożliwia. Potencjalny stopień akceleracji jest zależny natomiast od rozważanego problemu.

@@ -1,0 +1,150 @@
+
+\section{Model systemu}
+
+\subsection{Wybrany wariant problemu}
+
+Do realizacji projektu wybrany został problem w~wariancie wyszukiwania dokładnego, za pomocą metody naiwnej. Powodem tej decyzji jest łatwość zrównoleglenia algorytmu, zarówno dla wielowątkowej implementacji na CPU, jak i~dla GPGPU.
+
+Metryką wybraną do oceny jakości zaimplementowanego rozwiązania jest akceleracja, uzyskana z~wykorzystania GPGPU. Wynika ona ze stosunku czasów rozwiązania problemu na GPGPU, do CPU. Została opisana wzorem~\ref{SpeedupRatio}.
+
+\begin{equation}
+    \label{SpeedupRatio}
+    S=\frac{T_{GPGPU}}{T_{CPU}}
+\end{equation}
+
+Zakłada się, że badane rozwiązania przyjmują zadaną instancję problemu (tekst i~wzorzec), a~następnie zwracają wynik działania w~postaci zbioru liczb, będących pozycjami wystąpień wzorca w~tekście. Wygenerowanie instancji problemu, wykorzystywanej do testów, nie jest wliczane w~mierzony czas rozwiązania.
+
+\subsection{Projekt i~implementacja systemu}
+
+Projekt, w~swoich założeniach mając testować możliwości akceleracji omawianego problemu w~środowisku przeglądarki internetowej, wymusił zaimplementowanie wszystkich elementów systemu w~tymże środowisku. Separacja części systemu o~różnej odpowiedzialności pozwoliła rozwijać je niezależnie od siebie.
+Wyodrębniono domeny odpowiedzialne za pomiar wydajności testowanych rozwiązań, algorytmy wykonywane na CPU i~GPU, generowanie danych testowych oraz \mbox{interfejs użytkownika.}
+
+\subsubsection{Narzędzia i~technologie}
+
+System dla użytkownika widoczny jest jako strona internetowa typu Single Page Application, umożliwiająca przetestowanie zdefiniowanego problemu na różnych przeglądarkach internetowych i~maszynach o~różnej konfiguracji sprzętowej. Całość budowana jest przy pomocy narzędzia Webpack~\cite{Webpack}. Za funkcjonowanie interfejsu użytkownika odpowiada framework React~\cite{React}, a~za interaktywne wykresy framework Plotly.js~\cite{Plotly}.
+
+Pomiar wydajności pierwotnie korzystać miał z~biblioteki benchmark.js, lecz jego niekompatybilność z~systemem budowania projektu wymusiła stworzenie znacznie prostszego systemu pomiaru czasu. Stworzony system pomiarowy korzysta z~interfejsu \texttt{Performance}~\cite{HRT} przeglądarki i~pozwala na wielokrotne powtórzenie testu dla tych samych danych. Na podstawie powtórzeń wyliczone zostają statystyki powiązane z~testowanym rozmiarem problemu.
+
+Rozmiar rozwiązywanego problemu opisany jest jako rozmiar wzorca oraz rozmiar przeszukiwanego tekstu. Oba ciągi znaków generowane za pomocą liczb pseudolosowych i~konwertowane są do postaci bajtowej w~tablicy typu \texttt{Uint8Array} za pomocą interfejsu \texttt{TextEncoder} \cite{TextEncoder}. Wszystkie tablice korzystają ze współdzielonych buforów pamięci \texttt{SharedArrayBuffer}, co umożliwia uniknięcie opóźnień wynikających z~kopiowania pamięci.
+
+Algorytm rozwiązujący problem na CPU korzysta z~mechanizmu Workerów. Pozwala definiować ich liczbę, która odpowiada stopniowi zrównoleglenia obliczeń. Obliczenia na GPU korzystają z~API WebGL2, którego nadrzędnym celem jest generowanie grafiki 2D i~3D. Odpowiednio interpretując wynikowe wartości przetwarzania danych wejściowych jesteśmy w~stanie użyć jej do obliczeń niemających nic wspólnego z~grafiką. Biblioteką użytą i~stanowiącą warstwę abstrakcji pomiędzy WebGL, a~prowadzeniem obliczeń jest GPU.js~\cite{GPU.js}.
+
+\subsubsection{Algorytmy}
+% Maja
+% - abstrakcyjny scheduler i~wspólny interface
+% - odniesienia do UMLi, class D
+% - UMLe bardzo pływające, niech latex sobie ułoży sam
+% - ważny taki ram format wyjściowy (dla analizy GPU) - tablica wystąpień
+
+Klasą bazową, która zarządza konkretnym rozwiązaniem i~harmonogramuje jego uruchomienie, jest \texttt{CoreScheduler}. Ustala on również oczekiwany interfejs wejścia dla instancji problemu\linebreak (\texttt{DataInMessageBasePayload}) i~interfejs wyjścia dla wyniku (\texttt{DataOutMessageBasePayload}).\linebreak Zakłada się, że wynik jest zawsze podawany w~postaci zbioru liczb, określających pozycje w~tekście, na których wykryto wzorzec. \texttt{DataProvider} ułatwia generowanie pseudolosowych instancji problemu o~określonej długości tekstu i~wzorca, w~formacie oczekiwanym przez \texttt{CoreScheduler}.
+
+Rozmiar problemu oraz liczba wątków rozwiązujących problem określana jest przez użytkownika, za pośrednictwem interfejsu graficznego aplikacji. Po rozpoczęciu testu dla zadanej konfiguracji, generowana jest instancja problemu za pomocą klasy \texttt{DataProvider}.
+
+Poniżej opisane zostało działanie dwóch wariantów algorytmu, które ma miejsce bezpośrednio pomiędzy rozpoczęciem i~zakończeniem pomiaru czasu.
+
+\begin{figure}
+    \centering
+    \includegraphics[keepaspectratio, width=1.0\linewidth]{diagrams/out/core_class.png}
+    \caption{Diagram klas bazowych.}
+    \label{DiagramClassCPU}
+\end{figure}
+
+\paragraph{Wersja dla CPU}
+% Maja & Damian
+% - ustawienie concurrency
+% - workery nie są od razu ready - są łądowane asynchronicznie
+% - pierwsze wykonanie nieco wolniejsze, optymalizacja JIT silnika (chyba)
+% - ^- to już przy analizie wydajności
+% - opisanie właściwego algorytmu
+% - odniesienia do UMLi, sequence D
+
+W wariancie algorytmu wykonywanym na CPU, instancja problemu wraz z~oczekiwaną liczbą procesów go rozwiązujących przekazywana jest do \texttt{CpuScheduler}, który przygotowuje odpowiednią liczbę instancji klasy \texttt{CpuSolver} i~zarządza ich uruchomieniem. Każda z~instancji \texttt{CpuSolver}, funkcjonuje jako osobny Worker, co umożliwia ich współbieżne działanie i~wykorzystanie wielu rdzeni procesora \cite{WebWorker}. Po rozwiązaniu wydzielonej części problemu, każdy \texttt{CpuSolver} zwraca uzyskane wyniki. Następnie, \texttt{CpuScheduler} agreguje wyniki częściowe i~zwraca je do interfejsu graficznego. Całkowity czas rozwiązania problemu jest mierzony i~przedstawiany użytkownikowi.
+Strukturę klas implementujących rozwiązanie na CPU przedstawia diagram \ref{DiagramClassCPU}, natomiast sekwencję ich działań, diagram \ref{DiagramSequenceCPU}.
+
+Workery, w~związku ze specyfiką swojego funkcjonowania, muszą być ładowane asynchronicznie -- ich kod pobierany jest osobnym zapytaniem do serwera. Wprowadza to opóźnienie związane z~tworzeniem i~usuwaniem workerów. Nie było jednak ono brane pod uwagę podczas pomiarów wydajności. Przed rozpoczęciem pomiarów następuje synchronizacja wszystkich workerów.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[keepaspectratio, width=1.0\linewidth]{diagrams/out/cpu_class.png}
+    \caption{Diagram klas rozwiązania na CPU.}
+    \label{DiagramClassCPU}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[keepaspectratio, width=1.0\linewidth]{diagrams/out/cpu_sequence.png}
+    \caption{Diagram sekwencji rozwiązania na CPU.}
+    \label{DiagramSequenceCPU}
+\end{figure}
+
+
+\paragraph{Wersja dla GPU}
+% Kuba & Damian
+% - ustawienie concurrency - zawsze 1 optymalizacja pod względem obciążenia GPU, maksymalizacja liczby kerneli [+/-]
+% - wszystko synchronicznie - od razu ready [-]
+% - pierwsze wykonanie wolniejsze, optymalizacja JIT silnika (chyba) budowanie kernela, później kernel keszowany [+/-]
+% - opisanie właściwego algorytmu [+]
+% - odniesienia do UMLi, sequence D [+]
+
+% Damian - tutaj o~schedulerze + pomiar czasu + jakieś połączenie z~dalszym tekstem
+
+Analogicznie jak w~przypadku algorytmu na CPU, klasą zarządzającą wykonaniem obliczeń jest klasa rozszerzająca klasę \texttt{CoreScheduler} -- \texttt{GpuScheduler}. Wykonanie tego wariantu algorytmu nie odbywa się asynchronicznie i~blokuje wątek główny przeglądarki, co oznacza, że dalsza synchronizacja nie jest wymagana. \texttt{GpuScheduler} tworzy i~zarządza instancją klasy \texttt{GpuSolver}, która bezpośrednio korzysta z~biblioteki GPU.js, pozwalającą na wykonywanie obliczeń bezpośrednio na GPU poprzez abstrakcję kernela.
+
+Szczegóły struktur zdefiniowanych klas oraz interfejsów można znaleźć na diagramie klas~\ref{DiagramClassGPU}. Sekwencje operacji logicznych systemu, odpowiedzialnych za obsługę żądania wykonania algorytmu na GPU są przedstawione na diagramie sekwencji~\ref{DiagramSequenceGPU}.
+
+\begin{figure}
+    \centering
+    \includegraphics[keepaspectratio, width=1.0\linewidth]{diagrams/out/gpu_class.png}
+    \caption{Diagram klas rozwiązania na GPU.}
+    \label{DiagramClassGPU}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[keepaspectratio, width=1.0\linewidth]{diagrams/out/gpu_sequence.png}
+    \caption{Diagram sekwencji rozwiązania na GPU.}
+    \label{DiagramSequenceGPU}
+\end{figure}
+
+\begin{samepage}
+
+    Przed wykonaniem obliczeń, w~klasie \texttt{GpuSolver}, dane wejściowe algorytmu są sprawdzane pod kątem błędów. Wyznaczone niedozwolone przypadki to:
+    \begin{itemize}[noitemsep]
+        \item tekst pusty,
+        \item wzorzec pusty,
+        \item wzorzec dłuższy od tekstu.
+    \end{itemize}
+\end{samepage}
+
+Jeżeli spełniony zostanie co najmniej jeden z~wymienionych warunków, obliczenia nie są wykonywane, zaś algorytm zwraca odpowiedź bez rozwiązania z~odpowiednią informacją o~błędzie. W~przeciwnym wypadku wykonywane są wstępne obliczenia na CPU przygotowujące strukturę kernela dla GPU.
+
+Wymaganiem nałożonym na etap wstępnych obliczeń jest możliwie szybkie jego wykonanie. Z~uwagi na przyjęty sposób przydziału podproblemów wyszukiwania do wątków karty graficznej, szerzej opisany w~następnych akapitach, implementacja tego etapu charakteryzuje się złożonością $\mathcal{O}(1)$. Wykonywane jest tutaj jedynie odejmowanie długości wzorca od długości tekstu wyznaczające liczbę pozycji bazowych do porównań tekstu i~wzorca (tzw. okien), które zostaną rozdzielone pomiędzy wątki uruchamiane na GPU.
+
+Do kompilacji kernela potrzebna jest informacja o~formacie danych wyjściowych z~GPU, którą na tym etapie algorytm posiada. W~celach optymalizacyjnych kompilacja wykonywana jest tylko wtedy, gdy jest to konieczne. Algorytm sprawdza, czy zmienił się format wyjścia danych z~GPU (liczba okien, tj. liczba wątków) i~jeżeli nie nastąpiła taka zmiana, to wykorzystywana jest przechowywana, wcześniej skompilowana wersja kernela.
+
+Sam algorytm dla pojedynczego wątku GPU jest możliwie prosty. Wykonywane jest porównanie wzorca z~tekstem na pozycji wyznaczonej przez numer wątku; wątków logicznych jest tyle samo, co okien. Porównanie to jest wykonywane w~pętli, gdzie liczba iteracji jest ograniczona z~góry przez długość wzorca. Wątek obliczeniowy GPU zwraca $-1$, jeżeli okaże się, że i-ta pozycja wzorca jest różna od odpowiadającej jej pozycji w~tekście. Jeżeli wzorzec i~tekst są równe w~n-tym oknie, którego indeks jest jednocześnie indeksem wątku, to zwracany jest właśnie ten indeks.
+
+Przyjęto, iż ogólny format danych wyjściowych z~algorytmu wyszukiwania będzie miał strukturę listy z~indeksami, na których wystąpiło dopasowanie -- jest to struktura gęsta (,,dense''). Niestety format danych wyjściowych z~GPU ma z~góry narzuconą strukturę rzadką (,,sparse'') -- lista zawiera wynik dla każdego zbadanego okna. Wymusza to dodatkową konwersję wyjścia GPU do formatu gęstego. Operacja ta jest wykonywana przez CPU ze złożonością $\mathcal{O}(n)$. Po konwersji danych wyjściowych GPU, algorytm jest gotowy do zwrócenia wyniku.
+
+% Damian - tutaj o~odebraniu wyniku i~zakończeniu pomiaru czasu
+Dane wejściowe dobrane są tak, że gwarantują co najmniej jedno wykrycie wzorca w~tekście. Ze względu na specyfikę pomiarów wydajności, wynik nie jest nigdzie przechowywany, a~referencja do wynikowej tablicy zostaje finalnie usunięta przez mechanizm Garbage Collector.
+
+
+\subsection{Interfejs użytkownika}
+% Kuba2 & Damian
+% - react
+% - wykresy Plotly, 
+% - konfiguracja uruchamiania, warianty 
+% - jak zrobić co (np generujemy serię, klikamy na punkt i~wyświetla się histogram)
+
+Interfejs przygotowano w formie panelu webowego z~pomocą biblioteki \emph{React}. Do dyspozycji użytkownika oddano zestaw narzędzi, który pozwala na konfigurację parametrów testowanego algorytmu oraz przeglądanie wyników jego działania w~postaci wykresów i~histogramów. 
+
+Panel dzieli się na dwie główne części. Pierwsza, górna, pozwala na wprowadzenie podstawowych wartości konfiguracyjnych dla algorytmu takich, jak długość badanego tekstu i~długość poszukiwanego wzorca, oraz parametry określające jak zwiększać mają się wspomniane wartości z~kolejnymi testami. Dodatkowo w~pierwszej części interfejsu użytkownik ma możliwość sprawdzenia specyfikacji systemu, przeglądarki oraz komputera na jakim uruchomione jest oprogramowanie. 
+
+Druga część interfejsu przeznaczona jest do wykonywania testów i~podglądu wyników ich działania. Dzieli ona się na cztery zakładki: trzy dla różnych wariantów badanego algorytmu oraz czwarta pozwalająca na podgląd podsumowania wykonanych testów. W~poszczególnych zakładkach zdefiniować można dodatkowo parametry dla danego wariantu algorytmu takie, jak ilość powtórzeń każdego problemu lub ilość wątków bądź kerneli w~przypadku algorytmów wielowątkowych. 
+
+Przy wykonywaniu badań użytkownik ma dostęp do kilku wykresów. Pierwszy z~nich oferuje dostęp do średniego czasu wykonania algorytmu w~zależności od długości problemu. Dodatkowo na wykresie zaznaczane jest odchylenie standardowe, minimum i~maksimum dla każdego z~punktów. Na kolejnych wykresach użytkownik może obserwować konkretne wartości z~badań, takie, jak maksymalny oraz minimalny czas wykonania oraz jego wariancja i~odchylenie standardowe. 
+
+Do wyświetlenia wykresów wykorzystano bibliotekę \emph{Plotly.js}. Oferuje ona bardzo duży zakres możliwości i~personalizacji.  W~ramach \emph{Plotly.js} dostarczane jest ponad 40 typów wykresów w~tym między innymi wykresy 3D i~mapy. W~przygotowaniu omawianego panelu wykorzystano zaplecze do tworzenia grafów statystycznych. Oprogramowanie oferuje między innymi możliwość wyboru wyświetlanych zestawów danych, przybliżania czy zapisywania wykresów w~formie obrazów PNG, co gwarantuje dużą wygodę w~analizie wyników badań.
+

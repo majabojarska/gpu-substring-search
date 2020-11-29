@@ -1,0 +1,38 @@
+
+\section{Wstęp}
+% Kuba2
+% - filozoficzne pierdoły o~akceleracji, czemu ważne blabla
+% Tutaj napisz może coś o~bioinformatyce, sekwencjonowaniu dna - bo fajne i~nauka go BRRRRRR ACTGACTGACTGACTG.
+
+\subsection{Cele i~zakres projektu}
+Głównym celem tego projektu była próba akceleracji algorytmu wyszukiwania podciągu w~ciągu znaków poprzez zrównoleglenie jego składowych z~wykorzystaniem akceleratora graficznego. Za punkt odniesienia przyjęto sekwencyjną wersję algorytmu uruchamianą na CPU. Dodatkowo zbadana została zrównoleglona wersja algorytmu na dostępnych rdzeniach CPU. Do wykonania zadania akceleracji niezbędne było zdobycie informacji o~sposobie implementacji algorytmów równoległych dla GPU, gdyż ich struktura różni się od struktury standardowych \mbox{algorytmów sekwencyjnych.}
+
+Ponadto, w~celach zawarło się wykorzystanie frameworka GPU.js, który dostarcza interfejs programistyczny pozwalający na interakcję z~procesorem graficznym w~celu wykonania standardowych obliczeń nie wpisujących się w potok graficzny. Wykorzystanie wspomnianego frameworka narzuciło uruchamianie projektu w~środowisku przeglądarki internetowej. Projekt zakładał wykorzystanie więcej niż jednej przeglądarki na więcej niż jednej platformie sprzętowej.
+
+Zakres projektu wiąże się z~wyznaczonymi celami. Zaimplementowane zostały 3 wersje algorytmu wyszukiwania podciągu w~ciągu znaków:
+\begin{itemize}[noitemsep]
+    \item sekwencyjny dla CPU,
+    \item równoległy dla CPU,
+    \item równoległy dla GPU.
+\end{itemize}
+Do implementacji równoległego algorytmu dla CPU wykorzystano w~znacznym stopniu implementację sekwencyjną -- w~obu przypadkach zastosowano obecny w~przeglądarkach mechanizm workerów. Implementacja dla GPU poprzedzona została analizą algorytmu sekwencyjnego oraz wyodrębnieniem elementów dających się zrównoleglić.
+
+Przygotowany został interfejs użytkownika pozwalający na łatwe dostosowywanie parametrów działania algorytmów, ich uruchamianie oraz pomiar czasów wykonania w~funkcji rozmiaru problemu. Posiadając tak przygotowany interfejs przeprowadzono eksperymenty oraz wyeksportowano dane pozwalające na porównanie oraz ocenę efektywności zaimplementowanych wersji algorytmu wyszukiwania ciągu znaków w~dostarczanym tekście.
+
+
+\subsection{Aktualny stan wiedzy o~problemie}
+Wyszukiwanie wzorca (podciągu) w~tekście (ciągu znaków) jest powszechnie występującym problemem w~dziedzinie przetwarzania tekstu. Może on zostać zdefiniowany w~następujący sposób: dla danego tekstu $ T[1..n]$ i~wzorca $ W[1..m] $, znajdź wszystkie pozycje $i$, dla których zachodzi $ T[i+k] = W[k] $, przy założeniach $ m \leq n \wedge 1 \leq k \leq m \wedge 0 \leq i~\leq n - m$.
+
+Wcześniejsze badania wykazały, że akceleracja z~wykorzystaniem procesora graficznego ogólnego przeznaczenia (dalej zwanym GPGPU\footnote{Z ang. "general purpose graphics processing unit".}) umożliwia nawet dwudziestokrotne przyspieszenie, względem implementacji na CPU\cite{StringMatchingMulticoreGPU}. Wynik ten jest jednak zależny od czynników takich jak: długość tekstu, długość wzorca, zastosowany algorytm, model CPU i~GPGPU.
+
+\subsection{Znane rozwiązania}
+Do opisu algorytmów przyjęto, że długość przeszukiwanego tekstu wynosi $n$, natomiast długość wyszukiwanego wzorca $m$.
+
+\begin{itemize}
+    \item Metoda naiwna, znana również jako ,,brute force''. Jest prosta i~jednocześnie najmniej wydajna. Polega na przesuwaniu okna o~długości wzorca, wdłuż przeszukiwanego tekstu. Na każdej pozycji, sprawdzane jest dopasowanie wzorca do fragmentu tekstu objętego oknem\cite{NaiveSearchAlgo}. Algorytm ten ma średnią złożoność obliczeniową $\Theta(n+m)$, natomiast pesymistyczną $\mathcal{O}(nm)$. Ze względu na to, że nie wykonuje wstępnego przetwarzania danych, nie wymaga alokowania dodatkowej pamięci.
+    \item Algorytm Knutha-Morrisa-Pratta wykorzystuje wiedzę na temat wyszukiwanego wzorca, na podstawie której wyznacza kolejne pozycje porównywania w~tekście\cite{KnuthMorrisPrattAlgo}. W~ten sposób, redukuje liczbę wykonywanych porównań, osiągając złożoność obliczeniową $\mathcal{O}(n)$. Dodatkowo, wymaga wstępnego przetworzenia wzorca, co obarczone jest złożonością obliczeniową i\linebreak pamięciową $\mathcal{O}(m)$.
+    \item Algorytm Boyera-Moorea, w~przeciwieństwie do wyżej opisanych, sprawdza dopasowanie wzorca od jego ostatniego ($wzorzec[m]$), do pierwszego znaku ($wzorzec[1]$). W~sytuacji niedopasowania na obecnej pozycji, wykonywany jest skok, którego długość określana jest na podstawie wyniku wcześniejszego przetworzenia wzorca\cite{BoyerMooreAlgo}. Szybkość działania algorytmu wzrasta wraz ze wzrostem długości wzorca, ponieważ umożliwia to potencjalnie dłuższe skoki. Pesymistyczna złożoność obliczeniowa przetwarzania wstępnego wynosi $\mathcal{O}(m)$, a~wyszukiwania $\mathcal{O}(mn)$. Pamięć wymagana do przechowania wyniku wstępnego przetworzenia wzorca wynosi $\Theta(k)$, gdzie $k$ stanowi długość alfabetu (zbioru znaków) wykorzystanego w~tekście.
+    \item Algorytm Rabina-Karpa wykorzystuje funkcję skrótu (ang. hash function) do wstępnej oceny dopasowania wzorca\cite{RabinKarpAlgo}. Jego wydajność jest zależna od wybranej funkcji skrótu, której obliczenie nie powinno być kosztowne. Wyszukiwanie wzorca polega na porównywaniu skrótu wzorca $hash(wzorzec[1..m])$, do skrótu fragmentu tekstu $hash(tekst[i..i+m-1])$, dla $1 \leq i~\leq n-m+1$. Równość skrótów w~ogólnym przypadku nie gwarantuje dopasowania ciągów znaków, dla których zostały obliczone. Dlatego, aby móc stwierdzić wykrycie wzorca, należy dodatkowo porównać ciągi znaków.
+    Algorytm ten stanowi dobre rozwiązanie dla problemu wyszukiwania wielu (różnych) wzorców w~tekście. Jego złożoność zależy od wykorzystanej funkcji skrótu. W~kontekście wyszukiwania pojedynczego wzorca, jest mniej wydajny od algorytmów Boyera-Moorea i~Knutha-Morrisa-Pratta. 
+
+\end{itemize}
